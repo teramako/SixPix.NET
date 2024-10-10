@@ -88,15 +88,16 @@ public class Sixel
                 {
                     var rgb = img[x, y];
                     var idx = Array.IndexOf(colorPalette, rgb);
-                    cset[idx] = false;
+                    cset[idx] = true;
                     buffer[width * idx + x] |= (byte)(1 << p);
                 }
             }
             for (var n = 0; n < MAX_PALLETE_LENGTH; n++)
             {
-                if (cset[n]) continue;
+                if (!cset[n]) continue;
 
                 cset[n] = true;
+                cset[n] = false;
                 if (ch0 == specialChCr)
                 {
                     // DECGCR ($): Graphics Carriage Return
