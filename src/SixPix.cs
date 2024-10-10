@@ -87,12 +87,12 @@ public class Sixel
                 for (var x = 0; x < width && y < height; x++)
                 {
                     var rgb = img[x, y];
-                    var idx = Array.IndexOf(colorPalette, rgb) + 1;
+                    var idx = Array.IndexOf(colorPalette, rgb);
                     cset[idx] = false;
                     buffer[width * idx + x] |= (byte)(1 << p);
                 }
             }
-            for (var n = 1; n < MAX_PALLETE_LENGTH; n++)
+            for (var n = 0; n < MAX_PALLETE_LENGTH; n++)
             {
                 if (cset[n]) continue;
 
@@ -104,7 +104,7 @@ public class Sixel
                     DebugPrint($"[z={z},n={n}]: Carrige Return (Rewrite Same Line)");
                 }
 
-                sb.Append($"#{n}");
+                sb.Append($"#{n+1}");
                 var cnt = 0;
                 for (var x = 0; x < width; x++)
                 {
