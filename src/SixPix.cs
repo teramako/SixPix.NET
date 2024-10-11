@@ -61,8 +61,8 @@ public class Sixel
         //
         var sb = new StringBuilder();
         sb.Append(SixelStart);
-        // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
-        sb.Append(new char[] { ESC, 'P', ';', '0', ';', '8', 'q', '"', '1', ';', '1' });
+        // DECSIXEL DECGRA ("1;1;): Set Raster Attributes
+        sb.Append(new char[] { '"', '1', ';', '1', ';' });
         sb.Append($"{width};{height}");
 
         DebugPrint($"Pallete Start Length={colorPalette.Length}", lf: true);
