@@ -33,7 +33,7 @@ public class Sixel
     /// </summary>
     /// <param name="stream">Image Stream</param>
     /// <returns>Sxiel string</returns>
-    public static string Encode(Stream stream)
+    public static ReadOnlySpan<char> Encode(Stream stream)
     {
         var img = Image.Load<Rgb24>(stream);
         // 減色処理
