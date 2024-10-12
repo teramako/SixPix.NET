@@ -16,8 +16,6 @@ public class Sixel
     const byte specialChNr = (byte)0x6d;
     const byte specialChCr = (byte)0x64;
 
-    const int MAX_PALLETE_LENGTH = 255;
-
     [Conditional("DEBUG")]
     static void DebugPrint(string msg, ConsoleColor fg = ConsoleColor.Magenta, bool lf = false)
     {
@@ -66,7 +64,9 @@ public class Sixel
         sb.Append($"{width};{height}");
 
         DebugPrint($"Pallete Start Length={colorPalette.Length}", lf: true);
-        for (var i = 0; i < colorPalette.Length; i++)
+
+        int colorPaletteLength = colorPalette.Length;
+        for (var i = 0; i < colorPaletteLength; i++)
         {
             var rgb = colorPalette[i];
             var (r, g, b) = (rgb.R * 100 / 0xFF, rgb.G * 100 / 0xFF, rgb.B * 100 / 0xFF);
@@ -77,8 +77,8 @@ public class Sixel
         }
         DebugPrint("End Palette", ConsoleColor.DarkGray, true);
 
-        var buffer = new byte[width * MAX_PALLETE_LENGTH];
-        var cset = new bool[MAX_PALLETE_LENGTH];
+        var buffer = new byte[width * colorPaletteLength];
+        var cset = new bool[colorPaletteLength]; // 表示すべきカラーパレットがあるかのフラグ
         var ch0 = specialChNr;
         for (var z = 0; z < (height + 5) / 6; z++)
         {
@@ -99,7 +99,7 @@ public class Sixel
                     buffer[width * idx + x] |= (byte)(1 << p);
                 }
             }
-            for (var n = 0; n < MAX_PALLETE_LENGTH; n++)
+            for (var n = 0; n < colorPaletteLength; n++)
             {
                 if (!cset[n]) continue;
 
