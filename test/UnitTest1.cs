@@ -25,7 +25,7 @@ public class UnitTest1
         Assert.IsTrue(sixel.StartsWith(SixelStart));
         Assert.IsTrue(sixel.EndsWith(SixelEnd));
 
-        Assert.AreEqual<string>(result, sixel);
+        Assert.AreEqual<string>(result, sixel.ToString());
     }
 
     [TestMethod("test_2.png")]
@@ -43,6 +43,6 @@ public class UnitTest1
         Assert.IsTrue(sixel.StartsWith(SixelStart));
         Assert.IsTrue(sixel.EndsWith(SixelEnd));
 
-        Assert.AreEqual<string>(result, sixel);
+        Assert.AreEqual<string>(result, sixel.ToString());
     }
 }
