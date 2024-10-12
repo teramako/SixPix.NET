@@ -17,14 +17,14 @@ public class Sixel
     const byte specialChCr = (byte)0x64;
 
     [Conditional("DEBUG")]
-    static void DebugPrint(string msg, ConsoleColor fg = ConsoleColor.Magenta, bool lf = false)
+    static void DebugPrint(ReadOnlySpan<char> msg, ConsoleColor fg = ConsoleColor.Magenta, bool lf = false)
     {
         var currentFg = Console.ForegroundColor;
         Console.ForegroundColor = fg;
         if (lf)
-            Console.WriteLine(msg);
+            Console.Error.WriteLine(msg);
         else
-            Console.Write(msg);
+            Console.Error.Write(msg);
         Console.ForegroundColor = currentFg;
     }
 
@@ -73,7 +73,7 @@ public class Sixel
             // DECGCI (#): Graphics Color Introducer
             sb.Append($"#{i};2;{r:d};{g:d};{b:d}");
             DebugPrint($"#{i};2;", ConsoleColor.Red);
-            DebugPrint($"{r:d};{g:d};{b:d}", ConsoleColor.Green);
+            DebugPrint($"{r:d};{g:d};{b:d}", ConsoleColor.Green, true);
         }
         DebugPrint("End Palette", ConsoleColor.DarkGray, true);
 
@@ -85,9 +85,9 @@ public class Sixel
             if (z > 0) {
                 // DECGNL (-): Graphics Next Line
                 sb.Append('-');
-                DebugPrint($"NL", lf: true);
+                DebugPrint("-", lf: true);
             }
-            DebugPrint($"[z={z}]", ConsoleColor.DarkGray);
+            DebugPrint($"[{z}]", ConsoleColor.DarkGray);
             for (var p = 0; p < 6 && y < height; p++, y++)
             {
                 for (var x = 0; x < width; x++)
@@ -101,13 +101,12 @@ public class Sixel
             {
                 if (!cset[n]) continue;
 
-                DebugPrint($"[n={n}]", ConsoleColor.DarkGray);
                 cset[n] = false;
                 if (ch0 == specialChCr)
                 {
                     // DECGCR ($): Graphics Carriage Return
                     sb.Append('$');
-                    DebugPrint($"CR");
+                    DebugPrint("$");
                 }
 
                 sb.Append($"#{n}");
