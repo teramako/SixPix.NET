@@ -47,7 +47,7 @@ public class Sixel
 
         // カラーパレットの構築
         // XXX: もっと良い方法がありそう
-        Rgb24[] colorPalette;
+        ReadOnlySpan<Rgb24> colorPalette;
         using (var quantizer = KnownQuantizers.Octree.CreatePixelSpecificQuantizer<Rgb24>(img.Configuration))
         {
             quantizer.BuildPalette(new DefaultPixelSamplingStrategy(), img);
@@ -93,8 +93,7 @@ public class Sixel
                 var y = z * 6 + p;
                 for (var x = 0; x < width && y < height; x++)
                 {
-                    var rgb = img[x, y];
-                    var idx = Array.IndexOf(colorPalette, rgb);
+                    var idx = colorPalette.IndexOf(img[x, y]);
                     cset[idx] = true;
                     buffer[width * idx + x] |= (byte)(1 << p);
                 }
