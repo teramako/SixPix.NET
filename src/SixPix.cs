@@ -80,7 +80,7 @@ public class Sixel
         var buffer = new byte[width * colorPaletteLength];
         var cset = new bool[colorPaletteLength]; // 表示すべきカラーパレットがあるかのフラグ
         var ch0 = specialChNr;
-        for (var z = 0; z < (height + 5) / 6; z++)
+        for (var (z, y) = (0, 0); z < (height + 5) / 6; z++, y = z * 6)
         {
             if (z > 0) {
                 // DECGNL (-): Graphics Next Line
@@ -88,10 +88,9 @@ public class Sixel
                 DebugPrint($"NL", lf: true);
             }
             DebugPrint($"[z={z}]", ConsoleColor.DarkGray);
-            for (var p = 0; p < 6; p++)
+            for (var p = 0; p < 6 && y < height; p++, y++)
             {
-                var y = z * 6 + p;
-                for (var x = 0; x < width && y < height; x++)
+                for (var x = 0; x < width; x++)
                 {
                     var idx = colorPalette.IndexOf(img[x, y]);
                     cset[idx] = true;
