@@ -8,9 +8,8 @@ namespace SixPix;
 
 public partial class Sixel
 {
-    const char ESC = (char)0x1b;
-    static readonly char[] SixelStart = [ESC, 'P', 'q'];
-    static readonly char[] SixcelEnd = [ESC, '\\'];
+    const string SixelStart = "\x1bP7;1;q\"1;1";
+    const string SixelEnd = "\x1b\\";
 
     const byte specialChNr = (byte)0x6d;
     const byte specialChCr = (byte)0x64;
@@ -45,10 +44,9 @@ public partial class Sixel
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
         //
         var sb = new StringBuilder();
-        sb.Append(SixelStart);
-        // DECSIXEL DECGRA ("1;1;): Set Raster Attributes
-        sb.Append(new char[] { '"', '1', ';', '1', ';' });
-        sb.Append($"{width};{height}");
+        // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
+        sb.Append(SixelStart)
+          .Append($";{width};{height}");
 
         DebugPrint($"Pallete Start Length={colorPalette.Length}", lf: true);
 
@@ -173,7 +171,7 @@ public partial class Sixel
                 ch0 = specialChCr;
             }
         }
-        sb.Append(SixcelEnd);
+        sb.Append(SixelEnd);
         DebugPrint("End", ConsoleColor.DarkGray, true);
         return sb.ToString();
     }

@@ -5,7 +5,7 @@ namespace test;
 [TestClass]
 public class UnitTest1
 {
-    const string SixelStart = "\x1bPq";
+    const string SixelStart = "\x1bP7;1;q";
     const string SixelEnd = "\x1b\\";
 
     const string PROJ_DIR = "../../..";
