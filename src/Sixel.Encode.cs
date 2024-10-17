@@ -99,15 +99,18 @@ public partial class Sixel
                 sb.Append($"#{n}");
                 DebugPrint($"#{n}", ConsoleColor.Red, false);
                 var cnt = 0;
+                byte ch;
+                int bufIndex;
+                char sixelChar;
                 for (var x = 0; x < width; x++)
                 {
                     // make sixel character from 6 pixels
-                    var bufIndex = width * n + x;
-                    var ch = buffer[bufIndex];
+                    bufIndex = width * n + x;
+                    ch = buffer[bufIndex];
                     buffer[bufIndex] = 0;
                     if (ch0 < 0x40 && ch != ch0)
                     {
-                        var sixelChar = (char)(63 + ch0);
+                        sixelChar = (char)(63 + ch0);
                         for (; cnt > 255; cnt -= 255)
                         {
                             sb.Append("!255").Append(sixelChar);
@@ -140,7 +143,7 @@ public partial class Sixel
                 }
                 if (ch0 != 0)
                 {
-                    var sixelChar = (char)(63 + ch0);
+                    sixelChar = (char)(63 + ch0);
                     for (; cnt > 255; cnt -= 255)
                     {
                         sb.Append("!255").Append(sixelChar);
