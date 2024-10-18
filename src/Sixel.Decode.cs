@@ -57,6 +57,9 @@ public partial class Sixel
             {
                 case < 0:
                     throw new InvalidDataException($"Position = {stream.Position}");
+                case 0x0a:
+                case 0x0d:
+                    break;
                 case 0x1b: // ESC
                     var next = stream.ReadByte();
                     if (next == 0x5c) // '\' Sixel End sequence
