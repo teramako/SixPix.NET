@@ -107,9 +107,9 @@ public partial class Sixel
                                 break;
                             case 2: // RGB
                                 var rgb = new Rgb24(
-                                        (byte)(c1 * 0xFF / 100),
-                                        (byte)(c2 * 0xFF / 100),
-                                        (byte)(c3 * 0xFF / 100));
+                                        (byte)Math.Round((double)c1 * 0xFF / 100),
+                                        (byte)Math.Round((double)c2 * 0xFF / 100),
+                                        (byte)Math.Round((double)c3 * 0xFF / 100));
                                 _colorMap.Add(rgb);
                                 break;
                             default:
@@ -229,8 +229,8 @@ public partial class Sixel
                 break;
         }
 
-        return new Rgb24((byte)(r * 0xFF / 100),
-                         (byte)(g * 0xFF / 100),
-                         (byte)(b * 0xFF / 100));
+        return new Rgb24((byte)Math.Round(r * 0xFF / 100),
+                         (byte)Math.Round(g * 0xFF / 100),
+                         (byte)Math.Round(b * 0xFF / 100));
     }
 }
