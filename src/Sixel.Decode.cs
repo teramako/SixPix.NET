@@ -6,8 +6,22 @@ namespace SixPix;
 
 public partial class Sixel
 {
+    /// <summary>
+    /// Dcode Sixel string to Image
+    /// </summary>
+    /// <param name="sixelString">Sixel string data</param>
+    /// <returns>Decoded result</returns>
+    /// <exception cref="InvalidDataException">thrown when parsing Sixel data was failed.</exception>
+    public static Image<Rgb24> Decode(string sixelString)
+    {
+        using var mem = new MemoryStream(sixelString.Length);
+        mem.Write(System.Text.ASCIIEncoding.ASCII.GetBytes(sixelString));
+        mem.Seek(0, SeekOrigin.Begin);
+        return Decode(mem);
+    }
 
     /// <summary>
+    /// Dcode Sixel stream to Image
     /// </summary>
     /// <param name="stream">Readable stream contains Sixel data</param>
     /// <returns>Decoded result</returns>
