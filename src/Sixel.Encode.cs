@@ -16,11 +16,20 @@ public partial class Sixel
     /// <summary>
     /// Encode Image stream to Sixel string
     /// </summary>
-    /// <param name="stream">Image Stream</param>
+    /// <param name="stream">Image stream</param>
     /// <returns>Sxiel string</returns>
     public static ReadOnlySpan<char> Encode(Stream stream)
     {
         using var img = Image.Load<Rgb24>(stream);
+        return Encode(img);
+    }
+    /// <summary>
+    /// Encode Image to Sixel string
+    /// </summary>
+    /// <param name="img">Image data</param>
+    /// <returns>Sxiel string</returns>
+    public static ReadOnlySpan<char> Encode(Image<Rgb24> img)
+    {
         // 減色処理
         img.Mutate(x => {
             x.Quantize(KnownQuantizers.Octree);
