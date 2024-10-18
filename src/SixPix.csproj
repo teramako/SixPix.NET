@@ -5,10 +5,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <VersionPrefix>0.2.0</VersionPrefix>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Encode Image to Sixel string and Decode Sixel string to Image</Description>
+    <Authors>teramako</Authors>
+    <Product>SixPix.NET</Product>
+    <Copyright>Copyright (c) teramako 2024</Copyright>
+    <RepositoryUrl>https://github.com/teramako/SixPix.NET</RepositoryUrl>
+    <PackageTags>Sixel</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
+    <None Include="../LICENSE" Pack="true" PackagePath="" />
+    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
