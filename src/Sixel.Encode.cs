@@ -2,7 +2,6 @@ using System.Text;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Processing.Processors.Quantization;
 
 namespace SixPix;
 
@@ -32,13 +31,7 @@ public partial class Sixel
         DebugPrint($"Width: {width}, Height: {height}, (bpp={img.PixelType.BitsPerPixel})", lf: true);
 
         // カラーパレットの構築
-        // XXX: もっと良い方法がありそう
-        ReadOnlySpan<Rgb24> colorPalette;
-        using (var quantizer = KnownQuantizers.Octree.CreatePixelSpecificQuantizer<Rgb24>(img.Configuration))
-        {
-            quantizer.BuildPalette(new DefaultPixelSamplingStrategy(), img);
-            colorPalette = new HashSet<Rgb24>(quantizer.Palette.ToArray()).ToArray();
-        }
+        ReadOnlySpan<Rgb24> colorPalette = GetColorPallete(img);
 
         //
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
@@ -177,5 +170,12 @@ public partial class Sixel
         sb.Append(SixelEnd);
         DebugPrint("End", ConsoleColor.DarkGray, true);
         return sb.ToString();
+    }
+
+    private static ReadOnlySpan<Rgb24> GetColorPallete(Image<Rgb24> image)
+    {
+        Span<Rgb24> rgbData = new Rgb24[image.Width * image.Height];
+        image.CopyPixelDataTo(rgbData);
+        return new HashSet<Rgb24>(rgbData.ToArray()).ToArray();
     }
 }
