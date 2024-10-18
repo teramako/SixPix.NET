@@ -3,7 +3,7 @@ using SixPix;
 namespace test;
 
 [TestClass]
-public class UnitTest1
+public class EncodeTest
 {
     const string SixelStart = "\x1bP7;1;q";
     const string SixelEnd = "\x1b\\";
@@ -20,7 +20,7 @@ public class UnitTest1
         }
     }
 
-    [TestMethod("test_1.png")]
+    [TestMethod("[Encode] test_1.png")]
     public void TestMethod1()
     {
         var resultFileInfo = new FileInfo(PROJ_DIR + "/data/test_1_sixel.out");
@@ -38,7 +38,7 @@ public class UnitTest1
         CompareData(result, sixel.ToString());
     }
 
-    [TestMethod("test_2.png")]
+    [TestMethod("[Encode] test_2.png")]
     public void TestMethod2()
     {
         var resultFileInfo = new FileInfo(PROJ_DIR + "/data/test_2_sixel.out");
