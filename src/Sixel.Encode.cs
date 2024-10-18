@@ -109,25 +109,24 @@ public partial class Sixel
                             sb.Append("!255").Append(sixelChar);
                             DebugPrint($"!255{sixelChar}", ConsoleColor.Yellow);
                         }
-                        if (cnt == 1)
+                        switch (cnt)
                         {
-                            sb.Append(sixelChar);
-                            DebugPrint($"{sixelChar}", ConsoleColor.Yellow);
-                        }
-                        else if (cnt == 2)
-                        {
-                            sb.Append([sixelChar, sixelChar]);
-                            DebugPrint($"{sixelChar}{sixelChar}", ConsoleColor.Yellow);
-                        }
-                        else if (cnt == 3)
-                        {
-                            sb.Append([sixelChar, sixelChar, sixelChar]);
-                            DebugPrint($"{sixelChar}{sixelChar}{sixelChar}", ConsoleColor.Yellow);
-                        }
-                        else
-                        {
-                            sb.Append($"!{cnt}").Append(sixelChar);
-                            DebugPrint($"!{cnt}{sixelChar}", ConsoleColor.Yellow);
+                            case 1:
+                                sb.Append(sixelChar);
+                                DebugPrint($"{sixelChar}", ConsoleColor.Yellow);
+                                break;
+                            case 2:
+                                sb.Append([sixelChar, sixelChar]);
+                                DebugPrint($"{sixelChar}{sixelChar}", ConsoleColor.Yellow);
+                                break;
+                            case 3:
+                                sb.Append([sixelChar, sixelChar, sixelChar]);
+                                DebugPrint($"{sixelChar}{sixelChar}{sixelChar}", ConsoleColor.Yellow);
+                                break;
+                            case > 0:
+                                sb.Append($"!{cnt}").Append(sixelChar);
+                                DebugPrint($"!{cnt}{sixelChar}", ConsoleColor.Yellow);
+                                break;
                         }
                         cnt = 0;
                     }
@@ -142,27 +141,25 @@ public partial class Sixel
                         sb.Append("!255").Append(sixelChar);
                         DebugPrint($"!255{sixelChar}", ConsoleColor.Cyan);
                     }
-                    if (cnt == 1)
+                    switch (cnt)
                     {
-                        sb.Append(sixelChar);
-                        DebugPrint($"{sixelChar}", ConsoleColor.Cyan);
+                        case 1:
+                            sb.Append(sixelChar);
+                            DebugPrint($"{sixelChar}", ConsoleColor.Cyan);
+                            break;
+                        case 2:
+                            sb.Append([sixelChar, sixelChar]);
+                            DebugPrint($"{sixelChar}{sixelChar}", ConsoleColor.Cyan);
+                            break;
+                        case 3:
+                            sb.Append([sixelChar, sixelChar, sixelChar]);
+                            DebugPrint($"{sixelChar}{sixelChar}{sixelChar}", ConsoleColor.Cyan);
+                            break;
+                        case > 0:
+                            sb.Append($"!{cnt}").Append(sixelChar);
+                            DebugPrint($"!{cnt}{sixelChar}", ConsoleColor.Cyan);
+                            break;
                     }
-                    else if (cnt == 2)
-                    {
-                        sb.Append([sixelChar, sixelChar]);
-                        DebugPrint($"{sixelChar}{sixelChar}", ConsoleColor.Cyan);
-                    }
-                    else if (cnt == 3)
-                    {
-                        sb.Append([sixelChar, sixelChar, sixelChar]);
-                        DebugPrint($"{sixelChar}{sixelChar}{sixelChar}", ConsoleColor.Cyan);
-                    }
-                    else
-                    {
-                        sb.Append($"!{cnt}").Append(sixelChar);
-                        DebugPrint($"!{cnt}{sixelChar}", ConsoleColor.Cyan);
-                    }
-                    cnt = 0;
                 }
                 ch0 = specialChCr;
             }
