@@ -10,6 +10,16 @@ public class UnitTest1
 
     const string PROJ_DIR = "../../..";
 
+    private static void CompareData(string expect, string actual)
+    {
+        var expectLines = expect.Replace("\x1b", "^[").Split('#');
+        var sixelLines = actual.Replace("\x1b", "^[").Split('#');
+        for (var i = 0; i < expectLines.Length; i++)
+        {
+            Assert.AreEqual<string>(expectLines[i], sixelLines[i]);
+        }
+    }
+
     [TestMethod("test_1.png")]
     public void TestMethod1()
     {
@@ -25,7 +35,7 @@ public class UnitTest1
         Assert.IsTrue(sixel.StartsWith(SixelStart));
         Assert.IsTrue(sixel.EndsWith(SixelEnd));
 
-        Assert.AreEqual<string>(result, sixel.ToString());
+        CompareData(result, sixel.ToString());
     }
 
     [TestMethod("test_2.png")]
@@ -43,6 +53,6 @@ public class UnitTest1
         Assert.IsTrue(sixel.StartsWith(SixelStart));
         Assert.IsTrue(sixel.EndsWith(SixelEnd));
 
-        Assert.AreEqual<string>(result, sixel.ToString());
+        CompareData(result, sixel.ToString());
     }
 }
