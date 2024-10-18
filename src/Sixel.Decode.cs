@@ -1,5 +1,6 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace SixPix;
 
@@ -14,8 +15,6 @@ public partial class Sixel
     public static Image<Rgb24> Decode(Stream stream)
     {
         List<Rgb24> _colorMap = new List<Rgb24>();
-        Image<Rgb24>? image = null;
-
         int currentX = 0;
         int currentY = 0;
         int Width = 0;
@@ -49,6 +48,15 @@ public partial class Sixel
                 break;
         }
 
+        var campusSize = new Size(200, 200);
+        var resizeOption = new ResizeOptions()
+        {
+            Mode = ResizeMode.BoxPad,
+            Position = AnchorPositionMode.TopLeft,
+        };
+
+        Image<Rgb24> image = new Image<Rgb24>(campusSize.Width, campusSize.Height, Color.White);
+
         DebugPrint("Start Sixel Data", lf: true);
         currentChar = stream.ReadByte();
         do
@@ -64,9 +72,12 @@ public partial class Sixel
                     var next = stream.ReadByte();
                     if (next == 0x5c) // '\' Sixel End sequence
                     {
-                        if (image is not null)
-                            return image;
-                        throw new InvalidDataException("Image is null. May be sixcel data is empty.");
+                        if (image.Width != Width || image.Height != Height)
+                        {
+                            DebugPrint($"Crop {image.Width}x{image.Height} => {Width}x{Height}", ConsoleColor.Red, true);
+                            image.Mutate(x => x.Crop(Width, Height));
+                        }
+                        return image;
                     }
                     throw new InvalidDataException($"Sixel must be end with [ESC, '\']");
                 case 0x21: // '!' Graphics Repeat Introducer
@@ -85,10 +96,11 @@ public partial class Sixel
                     if (param.Count < 4)
                         throw new InvalidDataException($"Invalie Header: {string.Join(';', param)}");
 
-                    Width = param[2];
-                    Height = param[3];
-                    image = new Image<Rgb24>(Width, Height);
-                    DebugPrint($"New Image {Width}x{Height}", lf: true);
+                    campusSize.Width = param[2];
+                    campusSize.Height = param[3];
+                    DebugPrint($"Resize Image {image.Size} => {campusSize}", lf: true);
+                    resizeOption.Size = campusSize;
+                    image.Mutate(x => x.Resize(resizeOption));
                     continue;
                 case 0x23: // '#'
                     colorN = -1;
@@ -123,28 +135,45 @@ public partial class Sixel
                 case 0x2d: // '-'
                     currentX = 0;
                     currentY += 6;
+                    if (campusSize.Height < currentY + 6)
+                    {
+                        campusSize.Height *= 2;
+                        DebugPrint($"Resize Image Height {image.Size} => {campusSize}", lf: true);
+                        resizeOption.Size = campusSize;
+                        image.Mutate(x => x.Resize(resizeOption));
+                    }
                     break;
                 case > 0x3E and < 0x7F:
                     sixelBit = currentChar - 0x3F;
-                    if (repeatCount < 0)
-                        repeatCount = 1;
 
+                    if (campusSize.Width < currentX + repeatCount)
+                    {
+                        campusSize.Width *= 2;
+                        DebugPrint($"Resize Image Width {image.Size} => {campusSize}", lf: true);
+                        resizeOption.Size = campusSize;
+                        image.Mutate(x => x.Resize(resizeOption));
+                    }
                     for (var x = currentX; x < currentX + repeatCount; x++)
                     {
+                        var y = currentY;
                         for (var p = 0; p < 6; p++)
                         {
-                            var y = currentY + p;
                             if ((sixelBit & (1 << p)) > 0)
                             {
-                                image![x, y] = _colorMap[colorN];
+                                image[x, y] = _colorMap[colorN];
+                                if (Height < y + 1)
+                                    Height = y + 1;
                             }
+                            y++;
                         }
                     }
                     currentX += repeatCount;
-                    repeatCount = -1;
+                    if (Width < currentX)
+                        Width = currentX;
+                    repeatCount = 1;
                     break;
                 default:
-                    throw new InvalidDataException($"Invalid data at {stream.Position}: {Convert.ToChar(currentChar)}");
+                    throw new InvalidDataException($"Invalid data at {stream.Position}: 0x{currentChar:x}");
             }
 
             currentChar = stream.ReadByte();
