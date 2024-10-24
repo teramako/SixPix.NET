@@ -19,7 +19,7 @@ public static ReadOnlySpan<char> SixPix.Sixel.Encode(Stream stream)
 ```csharp
 using SixPix;
 
-using var fileStream = new FileStream(@"path/to/image.png");
+using var fileStream = new FileStream(@"path/to/image.png", FileMode.Open);
 ReadOnlySpan<char> sixelString = Sixel.Encode(fileStream);
 Console.Out.WriteLine(sixelString);
 ```
@@ -59,7 +59,7 @@ public static Image<Rgb24> Sixel.Decode(Stream stream)
 using SixLabors.ImageSharp.Formats.Png;
 using SixPix;
 
-using var fileStream = new FileStream(@"path/to/sixeldata");
+using var fileStream = new FileStream(@"path/to/sixeldata", FileMode.Open);
 using var image = Sixel.Decode(fs);
 using var writeStream = new FileStream(@"path/to/sixel_image.png", FileMode.Create);
 image.Save(writeStream, new PngEncoder());
