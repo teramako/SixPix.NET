@@ -17,7 +17,7 @@ public partial class Sixel
     /// Encode Image stream to Sixel string
     /// </summary>
     /// <param name="stream">Image stream</param>
-    /// <returns>Sxiel string</returns>
+    /// <returns>Sixel string</returns>
     public static ReadOnlySpan<char> Encode(Stream stream)
     {
         using var img = Image.Load<Rgb24>(stream);
@@ -27,10 +27,11 @@ public partial class Sixel
     /// Encode Image to Sixel string
     /// </summary>
     /// <param name="img">Image data</param>
-    /// <returns>Sxiel string</returns>
+    /// <returns>Sixel string</returns>
     public static ReadOnlySpan<char> Encode(Image<Rgb24> img)
     {
         // 減色処理
+        // Color Reduction
         img.Mutate(x => {
             x.Quantize(KnownQuantizers.Octree);
         });
@@ -40,17 +41,19 @@ public partial class Sixel
         DebugPrint($"Width: {width}, Height: {height}, (bpp={img.PixelType.BitsPerPixel})", lf: true);
 
         // カラーパレットの構築
-        ReadOnlySpan<Rgb24> colorPalette = GetColorPallete(img);
+        // Building a color palette
+        ReadOnlySpan<Rgb24> colorPalette = GetColorPalette(img);
 
         //
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
+        //                                                        It's a complete rip-off!!
         //
         var sb = new StringBuilder();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
         sb.Append(SixelStart)
           .Append($";{width};{height}");
 
-        DebugPrint($"Pallete Start Length={colorPalette.Length}", lf: true);
+        DebugPrint($"Palette Start Length={colorPalette.Length}", lf: true);
 
         int colorPaletteLength = colorPalette.Length;
         for (var i = 0; i < colorPaletteLength; i++)
@@ -66,6 +69,7 @@ public partial class Sixel
 
         var buffer = new byte[width * colorPaletteLength];
         var cset = new bool[colorPaletteLength]; // 表示すべきカラーパレットがあるかのフラグ
+                                                 // Flag to indicate whether there is a color palette to display
         var ch0 = specialChNr;
         for (var (z, y) = (0, 0); z < (height + 5) / 6; z++, y = z * 6)
         {
@@ -178,7 +182,7 @@ public partial class Sixel
         return sb.ToString();
     }
 
-    private static ReadOnlySpan<Rgb24> GetColorPallete(Image<Rgb24> image)
+    private static ReadOnlySpan<Rgb24> GetColorPalette(Image<Rgb24> image)
     {
         Span<Rgb24> rgbData = new Rgb24[image.Width * image.Height];
         image.CopyPixelDataTo(rgbData);

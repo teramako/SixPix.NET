@@ -1,3 +1,4 @@
+using System.Numerics;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -7,28 +8,28 @@ namespace SixPix;
 public partial class Sixel
 {
     /// <summary>
-    /// Dcode Sixel string to Image
+    /// Decode Sixel string to Image
     /// </summary>
     /// <param name="sixelString">Sixel string data</param>
     /// <returns>Decoded result</returns>
-    /// <exception cref="InvalidDataException">thrown when parsing Sixel data was failed.</exception>
+    /// <exception cref="InvalidDataException">thrown when parsing Sixel data failed.</exception>
     public static Image<Rgb24> Decode(string sixelString)
     {
         using var mem = new MemoryStream(sixelString.Length);
-        mem.Write(System.Text.ASCIIEncoding.ASCII.GetBytes(sixelString));
+        mem.Write(System.Text.Encoding.ASCII.GetBytes(sixelString));
         mem.Seek(0, SeekOrigin.Begin);
         return Decode(mem);
     }
 
     /// <summary>
-    /// Dcode Sixel stream to Image
+    /// Decode Sixel stream to Image
     /// </summary>
     /// <param name="stream">Readable stream contains Sixel data</param>
     /// <returns>Decoded result</returns>
-    /// <exception cref="InvalidDataException">thrown when parsing Sixel data was failed.</exception>
+    /// <exception cref="InvalidDataException">thrown when parsing Sixel data failed.</exception>
     public static Image<Rgb24> Decode(Stream stream)
     {
-        List<Rgb24> _colorMap = new List<Rgb24>();
+        List<Rgb24> _colorMap = [];
         int currentX = 0;
         int currentY = 0;
         int Width = 0;
@@ -42,7 +43,7 @@ public partial class Sixel
         stream.Read(buffer);
         if (buffer[0] != 0x1B /* ESC */ || buffer[1] != 0x50 /* 'P' */)
         {
-            throw new InvalidDataException($"Sixel must be started with [ESC, 'P']");
+            throw new InvalidDataException($"Sixel must start with [ESC, 'P']");
         }
 
         int currentChar = stream.ReadByte();
@@ -69,7 +70,10 @@ public partial class Sixel
             Position = AnchorPositionMode.TopLeft,
         };
 
-        Image<Rgb24> image = new Image<Rgb24>(campusSize.Width, campusSize.Height, Color.White);
+        // ImageSharp v3.0
+        var image = new Image<Rgb24>(campusSize.Width, campusSize.Height, Color.White);
+        // ImageSharp v4.0
+        //var image = new Image<Rgb24>(new Configuration(), campusSize.Width, campusSize.Height, Rgb24.FromScaledVector4(Color.White.ToScaledVector4()));
 
         DebugPrint("Start Sixel Data", lf: true);
         currentChar = stream.ReadByte();
@@ -93,7 +97,7 @@ public partial class Sixel
                         }
                         return image;
                     }
-                    throw new InvalidDataException($"Sixel must be end with [ESC, '\']");
+                    throw new InvalidDataException($"Sixel must end with [ESC, '\']");
                 case 0x21: // '!' Graphics Repeat Introducer
                     repeatCount = -1;
                     currentChar = ReadNumber(stream, ref repeatCount);
@@ -108,7 +112,7 @@ public partial class Sixel
                     }
                     while (currentChar == 0x3B); // ';'
                     if (param.Count < 4)
-                        throw new InvalidDataException($"Invalie Header: {string.Join(';', param)}");
+                        throw new InvalidDataException($"Invalid Header: {string.Join(';', param)}");
 
                     campusSize.Width = param[2];
                     campusSize.Height = param[3];
@@ -139,7 +143,7 @@ public partial class Sixel
                                 _colorMap.Add(rgb);
                                 break;
                             default:
-                                throw new InvalidDataException($"color map type should be 1 or 2: {cSys}");
+                                throw new InvalidDataException($"Color map type should be 1 or 2: {cSys}");
                         }
                     }
                     continue;
