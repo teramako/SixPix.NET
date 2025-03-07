@@ -1,4 +1,6 @@
+#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
 using System.Numerics;
+#endif
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -13,7 +15,7 @@ public partial class Sixel
     /// <param name="sixelString">Sixel string data</param>
     /// <returns>Decoded result</returns>
     /// <exception cref="InvalidDataException">thrown when parsing Sixel data failed.</exception>
-    public static Image<Rgb24> Decode(string sixelString)
+    public static Image<Rgba32> Decode(string sixelString)
     {
         using var mem = new MemoryStream(sixelString.Length);
         mem.Write(System.Text.Encoding.ASCII.GetBytes(sixelString));
@@ -27,9 +29,9 @@ public partial class Sixel
     /// <param name="stream">Readable stream contains Sixel data</param>
     /// <returns>Decoded result</returns>
     /// <exception cref="InvalidDataException">thrown when parsing Sixel data failed.</exception>
-    public static Image<Rgb24> Decode(Stream stream)
+    public static Image<Rgba32> Decode(Stream stream)
     {
-        List<Rgb24> _colorMap = [];
+        List<Rgba32> _colorMap = [];
         int currentX = 0;
         int currentY = 0;
         int Width = 0;
@@ -70,10 +72,12 @@ public partial class Sixel
             Position = AnchorPositionMode.TopLeft,
         };
 
-        // ImageSharp v3.0
-        var image = new Image<Rgb24>(campusSize.Width, campusSize.Height, Color.White);
-        // ImageSharp v4.0
-        //var image = new Image<Rgb24>(new Configuration(), campusSize.Width, campusSize.Height, Rgb24.FromScaledVector4(Color.White.ToScaledVector4()));
+#if IMAGESHARP4 // ImageSharp v4.0
+        var image = new Image<Rgba32>(new Configuration(), campusSize.Width, campusSize.Height, Rgb24.FromScaledVector4(Color.White.ToScaledVector4()));
+#else
+        var image = new Image<Rgba32>(campusSize.Width, campusSize.Height, Color.White);
+#endif
+
 
         DebugPrint("Start Sixel Data", lf: true);
         currentChar = stream.ReadByte();
@@ -136,7 +140,7 @@ public partial class Sixel
                                 _colorMap.Add(HLStoRGB(c1, c2, c3));
                                 break;
                             case 2: // RGB
-                                var rgb = new Rgb24(
+                                var rgb = new Rgba32(
                                         (byte)Math.Round((double)c1 * 0xFF / 100),
                                         (byte)Math.Round((double)c2 * 0xFF / 100),
                                         (byte)Math.Round((double)c3 * 0xFF / 100));
@@ -224,7 +228,7 @@ public partial class Sixel
         return byteChar;
     }
 
-    private static Rgb24 HLStoRGB(int h, int l, int s)
+    private static Rgba32 HLStoRGB(int h, int l, int s)
     {
         double r; double g; double b;
         double max; double min;
@@ -276,7 +280,7 @@ public partial class Sixel
                 break;
         }
 
-        return new Rgb24((byte)Math.Round(r * 0xFF / 100),
+        return new Rgba32((byte)Math.Round(r * 0xFF / 100),
                          (byte)Math.Round(g * 0xFF / 100),
                          (byte)Math.Round(b * 0xFF / 100));
     }
