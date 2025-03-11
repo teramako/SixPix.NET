@@ -1,3 +1,6 @@
+#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
+using System.Numerics;
+#endif
 using System.Text;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -7,8 +10,9 @@ namespace SixPix;
 
 public partial class Sixel
 {
-    const string SixelStart = "\x1bP7;1;q\"1;1";
-    const string SixelEnd = "\x1b\\";
+    const char ESC = '\x1b';
+    const string SixelStart = "P7;1;q\"1;1";
+    const string SixelEnd = "\\";
 
     const byte specialChNr = (byte)0x6d;
     const byte specialChCr = (byte)0x64;
@@ -17,46 +21,72 @@ public partial class Sixel
     /// Encode Image stream to Sixel string
     /// </summary>
     /// <param name="stream">Image stream</param>
-    /// <returns>Sxiel string</returns>
-    public static ReadOnlySpan<char> Encode(Stream stream)
+    /// <returns>Sixel string</returns>
+    public static ReadOnlySpan<char> Encode(Stream stream, Color? tc = null, Color? bg = null, bool transp_bg = false, bool transp_tl = false)
     {
-        using var img = Image.Load<Rgb24>(stream);
-        return Encode(img);
+        using var img = Image.Load<Rgba32>(stream);
+        return Encode(img, tc, bg, transp_bg, transp_tl);
     }
     /// <summary>
     /// Encode Image to Sixel string
     /// </summary>
     /// <param name="img">Image data</param>
-    /// <returns>Sxiel string</returns>
-    public static ReadOnlySpan<char> Encode(Image<Rgb24> img)
+    /// <returns>Sixel string</returns>
+    public static ReadOnlySpan<char> Encode(Image<Rgba32> img, Color? tc = null, Color? bg = null, bool transp_bg = false, bool transp_tl = false)
     {
         // 減色処理
+        // Color Reduction
         img.Mutate(x => {
-            x.Quantize(KnownQuantizers.Octree);
+            x.Quantize(KnownQuantizers.Wu);
         });
         var width = img.Width;
         var height = img.Height;
 
         DebugPrint($"Width: {width}, Height: {height}, (bpp={img.PixelType.BitsPerPixel})", lf: true);
+        if (tc is not null)
+            DebugPrint($"Transparent Palette Color={tc?.ToHex()}", lf: true);
+        else if (bg is not null)
+            DebugPrint($"Background Color={bg?.ToHex()}", lf: true);
+        else
+            DebugPrint($"No Background or Transparent palette color found.", lf: true);
 
         // カラーパレットの構築
-        ReadOnlySpan<Rgb24> colorPalette = GetColorPallete(img);
+        // Building a color palette
+        ReadOnlySpan<Rgba32> colorPalette = GetColorPalette(img);
 
         //
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
+        //                                                        It's a complete rip-off!!
         //
         var sb = new StringBuilder();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
-        sb.Append(SixelStart)
+        sb.Append(ESC + SixelStart)
           .Append($";{width};{height}");
 
-        DebugPrint($"Pallete Start Length={colorPalette.Length}", lf: true);
+        DebugPrint($"Palette Start Length={colorPalette.Length}", lf: true);
 
         int colorPaletteLength = colorPalette.Length;
         for (var i = 0; i < colorPaletteLength; i++)
         {
             var rgb = colorPalette[i];
-            var (r, g, b) = (rgb.R * 100 / 0xFF, rgb.G * 100 / 0xFF, rgb.B * 100 / 0xFF);
+            int r = 0, g = 0, b = 0;
+
+            if (rgb.A == 0)
+                (r, g, b) = (0, 0, 0);
+#if IMAGESHARP4 // ImageSharp v4.0
+            else if (tc is not null && tc == Color.FromScaledVector(new Vector4(rgb.R, rgb.G, rgb.B, 0)))
+                (r, g, b) = (0, 0, 0);
+            else if (transp_bg && bg is not null && bg == Color.FromScaledVector(new Vector4(rgb.R, rgb.G, rgb.B, 0)))
+                (r, g, b) = (0, 0, 0);
+#else
+            else if (tc is not null && tc == Color.FromRgb(rgb.R, rgb.G, rgb.B))
+                (r, g, b) = (0, 0, 0);
+            else if (transp_bg && bg is not null && bg == Color.FromRgb(rgb.R, rgb.G, rgb.B))
+                (r, g, b) = (0, 0, 0);
+#endif
+            else
+                (r, g, b) = (rgb.R * 100 / 0xFF, rgb.G * 100 / 0xFF, rgb.B * 100 / 0xFF);
+
             // DECGCI (#): Graphics Color Introducer
             sb.Append($"#{i};2;{r:d};{g:d};{b:d}");
             DebugPrint($"#{i};2;", ConsoleColor.Red);
@@ -66,6 +96,7 @@ public partial class Sixel
 
         var buffer = new byte[width * colorPaletteLength];
         var cset = new bool[colorPaletteLength]; // 表示すべきカラーパレットがあるかのフラグ
+                                                 // Flag to indicate whether there is a color palette to display
         var ch0 = specialChNr;
         for (var (z, y) = (0, 0); z < (height + 5) / 6; z++, y = z * 6)
         {
@@ -80,7 +111,15 @@ public partial class Sixel
                 for (var x = 0; x < width; x++)
                 {
                     var idx = colorPalette.IndexOf(img[x, y]);
-                    cset[idx] = true;
+                    if (colorPalette[idx].A == 0)
+                        cset[idx] = false;
+                    else if (transp_tl && idx == 0)
+                        cset[idx] = false;
+                    else if (transp_bg && bg is not null && bg == colorPalette[idx])
+                        cset[idx] = false;
+                    else
+                        cset[idx] = true;
+
                     buffer[width * idx + x] |= (byte)(1 << p);
                 }
             }
@@ -173,15 +212,15 @@ public partial class Sixel
                 ch0 = specialChCr;
             }
         }
-        sb.Append(SixelEnd);
+        sb.Append(ESC + SixelEnd);
         DebugPrint("End", ConsoleColor.DarkGray, true);
         return sb.ToString();
     }
 
-    private static ReadOnlySpan<Rgb24> GetColorPallete(Image<Rgb24> image)
+    private static ReadOnlySpan<Rgba32> GetColorPalette(Image<Rgba32> image)
     {
-        Span<Rgb24> rgbData = new Rgb24[image.Width * image.Height];
+        Span<Rgba32> rgbData = new Rgba32[image.Width * image.Height];
         image.CopyPixelDataTo(rgbData);
-        return new HashSet<Rgb24>(rgbData.ToArray()).ToArray();
+        return new HashSet<Rgba32>(rgbData.ToArray()).ToArray();
     }
 }

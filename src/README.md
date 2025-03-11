@@ -28,7 +28,7 @@ Console.Out.WriteLine(sixelString);
 
 #### Syntax:
 ```csharp
-public static ReadOnlySpan<char> SixPix.Sixel.Encode(Image<Rgb24> img)
+public static ReadOnlySpan<char> SixPix.Sixel.Encode(Image<Rgba32> img)
 ```
 
 #### Example:
@@ -37,7 +37,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixPix;
 
-using Image<Rgb24> image = new Image<Rgb24>(width, height);
+using var image = new Image<Rgba32>(width, height);
 // drawing image ...
 ReadOnlySpan<char> sixelString = Sixel.Encode(image);
 Console.Out.WriteLine(sixelString);
@@ -51,7 +51,7 @@ Decode to [SixLabors.ImageSharp]'s Image from Sixel string data.
 
 #### Syntax:
 ```csharp
-public static Image<Rgb24> Sixel.Decode(Stream stream)
+public static Image<Rgba32> Sixel.Decode(Stream stream)
 ```
 
 #### Example:
@@ -69,7 +69,7 @@ image.Save(writeStream, new PngEncoder());
 
 #### Syntax:
 ```csharp
-public static Image<Rgb24> Sixel.Decode(String sixelString)
+public static Image<Rgba32> Sixel.Decode(String sixelString)
 ```
 
 #### Example:
@@ -82,7 +82,7 @@ var sixelString = "\x1bP7;1;q\"1;1;12;12"
                 + "#0!12~-"
                 + "#0!12~"
                 + "\x1b\\";
-using Image<Rgb24> image = Sixel.Decode(sixelString);
+using var image = Sixel.Decode(sixelString);
 using var writeStream = new FileStream(@"path/to/sixel_image.png", FileMode.Create);
 image.Save(writeStream, new PngEncoder());
 ```

@@ -1,3 +1,6 @@
+#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
+using System.Numerics;
+#endif
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -7,28 +10,28 @@ namespace SixPix;
 public partial class Sixel
 {
     /// <summary>
-    /// Dcode Sixel string to Image
+    /// Decode Sixel string to Image
     /// </summary>
     /// <param name="sixelString">Sixel string data</param>
     /// <returns>Decoded result</returns>
-    /// <exception cref="InvalidDataException">thrown when parsing Sixel data was failed.</exception>
-    public static Image<Rgb24> Decode(string sixelString)
+    /// <exception cref="InvalidDataException">thrown when parsing Sixel data failed.</exception>
+    public static Image<Rgba32> Decode(string sixelString)
     {
         using var mem = new MemoryStream(sixelString.Length);
-        mem.Write(System.Text.ASCIIEncoding.ASCII.GetBytes(sixelString));
+        mem.Write(System.Text.Encoding.ASCII.GetBytes(sixelString));
         mem.Seek(0, SeekOrigin.Begin);
         return Decode(mem);
     }
 
     /// <summary>
-    /// Dcode Sixel stream to Image
+    /// Decode Sixel stream to Image
     /// </summary>
     /// <param name="stream">Readable stream contains Sixel data</param>
     /// <returns>Decoded result</returns>
-    /// <exception cref="InvalidDataException">thrown when parsing Sixel data was failed.</exception>
-    public static Image<Rgb24> Decode(Stream stream)
+    /// <exception cref="InvalidDataException">thrown when parsing Sixel data failed.</exception>
+    public static Image<Rgba32> Decode(Stream stream)
     {
-        List<Rgb24> _colorMap = new List<Rgb24>();
+        List<Rgba32> _colorMap = [];
         int currentX = 0;
         int currentY = 0;
         int Width = 0;
@@ -42,7 +45,7 @@ public partial class Sixel
         stream.Read(buffer);
         if (buffer[0] != 0x1B /* ESC */ || buffer[1] != 0x50 /* 'P' */)
         {
-            throw new InvalidDataException($"Sixel must be started with [ESC, 'P']");
+            throw new InvalidDataException($"Sixel must start with [ESC, 'P']");
         }
 
         int currentChar = stream.ReadByte();
@@ -69,7 +72,12 @@ public partial class Sixel
             Position = AnchorPositionMode.TopLeft,
         };
 
-        Image<Rgb24> image = new Image<Rgb24>(campusSize.Width, campusSize.Height, Color.White);
+#if IMAGESHARP4 // ImageSharp v4.0
+        var image = new Image<Rgba32>(new Configuration(), campusSize.Width, campusSize.Height, Rgb24.FromScaledVector4(Color.White.ToScaledVector4()));
+#else
+        var image = new Image<Rgba32>(campusSize.Width, campusSize.Height, Color.White);
+#endif
+
 
         DebugPrint("Start Sixel Data", lf: true);
         currentChar = stream.ReadByte();
@@ -93,7 +101,7 @@ public partial class Sixel
                         }
                         return image;
                     }
-                    throw new InvalidDataException($"Sixel must be end with [ESC, '\']");
+                    throw new InvalidDataException($"Sixel must end with [ESC, '\']");
                 case 0x21: // '!' Graphics Repeat Introducer
                     repeatCount = -1;
                     currentChar = ReadNumber(stream, ref repeatCount);
@@ -108,7 +116,7 @@ public partial class Sixel
                     }
                     while (currentChar == 0x3B); // ';'
                     if (param.Count < 4)
-                        throw new InvalidDataException($"Invalie Header: {string.Join(';', param)}");
+                        throw new InvalidDataException($"Invalid Header: {string.Join(';', param)}");
 
                     campusSize.Width = param[2];
                     campusSize.Height = param[3];
@@ -132,14 +140,14 @@ public partial class Sixel
                                 _colorMap.Add(HLStoRGB(c1, c2, c3));
                                 break;
                             case 2: // RGB
-                                var rgb = new Rgb24(
+                                var rgb = new Rgba32(
                                         (byte)Math.Round((double)c1 * 0xFF / 100),
                                         (byte)Math.Round((double)c2 * 0xFF / 100),
                                         (byte)Math.Round((double)c3 * 0xFF / 100));
                                 _colorMap.Add(rgb);
                                 break;
                             default:
-                                throw new InvalidDataException($"color map type should be 1 or 2: {cSys}");
+                                throw new InvalidDataException($"Color map type should be 1 or 2: {cSys}");
                         }
                     }
                     continue;
@@ -220,7 +228,7 @@ public partial class Sixel
         return byteChar;
     }
 
-    private static Rgb24 HLStoRGB(int h, int l, int s)
+    private static Rgba32 HLStoRGB(int h, int l, int s)
     {
         double r; double g; double b;
         double max; double min;
@@ -272,7 +280,7 @@ public partial class Sixel
                 break;
         }
 
-        return new Rgb24((byte)Math.Round(r * 0xFF / 100),
+        return new Rgba32((byte)Math.Round(r * 0xFF / 100),
                          (byte)Math.Round(g * 0xFF / 100),
                          (byte)Math.Round(b * 0xFF / 100));
     }

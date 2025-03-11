@@ -5,15 +5,16 @@ namespace test;
 [TestClass]
 public class EncodeTest
 {
-    const string SixelStart = "\x1bP7;1;q";
-    const string SixelEnd = "\x1b\\";
+    const char ESC = '\x1b';
+    const string SixelStart = "P7;1;q";
+    const string SixelEnd = "\\";
 
     const string PROJ_DIR = "../../..";
 
     private static void CompareData(string expect, string actual)
     {
-        var expectLines = expect.Replace("\x1b", "^[").Split('#');
-        var sixelLines = actual.Replace("\x1b", "^[").Split('#');
+        var expectLines = expect.Replace(ESC.ToString(), "^[").Split('#');
+        var sixelLines = actual.Replace(ESC.ToString(), "^[").Split('#');
         for (var i = 0; i < expectLines.Length; i++)
         {
             Assert.AreEqual<string>(expectLines[i], sixelLines[i]);
@@ -32,8 +33,8 @@ public class EncodeTest
 
         var sixel = Sixel.Encode(fs);
 
-        Assert.IsTrue(sixel.StartsWith(SixelStart));
-        Assert.IsTrue(sixel.EndsWith(SixelEnd));
+        Assert.IsTrue(sixel.StartsWith(ESC + SixelStart));
+        Assert.IsTrue(sixel.EndsWith(ESC + SixelEnd));
 
         CompareData(result, sixel.ToString());
     }
@@ -50,8 +51,8 @@ public class EncodeTest
 
         var sixel = Sixel.Encode(fs);
 
-        Assert.IsTrue(sixel.StartsWith(SixelStart));
-        Assert.IsTrue(sixel.EndsWith(SixelEnd));
+        Assert.IsTrue(sixel.StartsWith(ESC + SixelStart));
+        Assert.IsTrue(sixel.EndsWith(ESC + SixelEnd));
 
         CompareData(result, sixel.ToString());
     }
