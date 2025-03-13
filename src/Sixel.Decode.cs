@@ -73,7 +73,7 @@ public partial class Sixel
         };
 
 #if IMAGESHARP4 // ImageSharp v4.0
-        var image = new Image<Rgba32>(new Configuration(), campusSize.Width, campusSize.Height, Rgb24.FromScaledVector4(Color.White.ToScaledVector4()));
+        var image = new Image<Rgba32>(new Configuration(), campusSize.Width, campusSize.Height, Rgba32.FromScaledVector4(Color.White.ToScaledVector4()));
 #else
         var image = new Image<Rgba32>(campusSize.Width, campusSize.Height, Color.White);
 #endif

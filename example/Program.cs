@@ -191,7 +191,7 @@ static void PrintUsage()
     Console.WriteLine("Encoding usage: SixPix.exe [/t|/T] <filein> [<fileout>]");
     Console.WriteLine(" /t              : make color at top-left (0,0) transparent");
     Console.WriteLine(" /T              : make GIF or WebP background color transparent");
-#if IMAGESHARP4
+#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
     Console.WriteLine(" <filein>        : Image file to encode to Sixel, supports BMP, CUR, GIF, ICO,");
     Console.WriteLine("                   JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
 #else

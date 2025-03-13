@@ -21,6 +21,10 @@ public partial class Sixel
     /// Encode Image stream to Sixel string
     /// </summary>
     /// <param name="stream">Image stream</param>
+    /// <param name="tc">Transparent color (for palette-based PNG images), or null</param>
+    /// <param name="bg">Background color (for some GIF or WebP images), or null</param>
+    /// <param name="transp_bg">Make the background color transparent (for some GIF or WebP images)</param>
+    /// <param name="transp_tl">Make the color found at the top left corner (0, 0) transparent</param>
     /// <returns>Sixel string</returns>
     public static ReadOnlySpan<char> Encode(Stream stream, Color? tc = null, Color? bg = null, bool transp_bg = false, bool transp_tl = false)
     {
@@ -31,9 +35,20 @@ public partial class Sixel
     /// Encode Image to Sixel string
     /// </summary>
     /// <param name="img">Image data</param>
+    /// <param name="tc">Transparent color (for palette-based PNG images)</param>
+    /// <param name="bg">Background color (for some GIF or WebP images)</param>
+    /// <param name="transp_bg">Make the background color transparent (for some GIF or WebP images)</param>
+    /// <param name="transp_tl">Make the color found at the top left corner (0, 0) transparent</param>
     /// <returns>Sixel string</returns>
     public static ReadOnlySpan<char> Encode(Image<Rgba32> img, Color? tc = null, Color? bg = null, bool transp_bg = false, bool transp_tl = false)
     {
+#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
+        if ((img.Metadata.DecodedImageFormat?.Name == "CUR" ||
+            img.Metadata.DecodedImageFormat?.Name == "ICO") &&
+            img.Frames.Count > 0)
+            img = img.Frames.ExportFrame(GetBestIconFrame(img));
+#endif
+
         // 減色処理
         // Color Reduction
         img.Mutate(x => {
@@ -115,7 +130,7 @@ public partial class Sixel
                         cset[idx] = false;
                     else if (transp_tl && idx == 0)
                         cset[idx] = false;
-                    else if (transp_bg && bg is not null && bg == colorPalette[idx])
+                    else if (transp_bg && bg is not null && bg.Equals(colorPalette[idx]))
                         cset[idx] = false;
                     else
                         cset[idx] = true;
@@ -223,4 +238,33 @@ public partial class Sixel
         image.CopyPixelDataTo(rgbData);
         return new HashSet<Rgba32>(rgbData.ToArray()).ToArray();
     }
+
+#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
+    static int GetBestIconFrame(Image icon)
+    {
+        int bestFrame = 0, maxWidth = 0, maxBpp = 0, i = 0;
+        DebugPrint(icon.Frames.Count + " ImageFrames:", lf: true);
+        foreach (var frame in icon.Frames)
+        {
+            var meta = frame.Metadata.GetIcoMetadata();
+            DebugPrint("  " + i + ":" + meta.EncodingWidth + "x" + meta.EncodingHeight + "x" + (int)meta.BmpBitsPerPixel + "b", lf: true);
+            if ((int)meta.BmpBitsPerPixel >= maxBpp)
+            {
+                maxBpp = (int)meta.BmpBitsPerPixel;
+                if (meta.EncodingWidth == 0) // oddly, 0 means 256
+                {
+                    maxWidth = 256;
+                    bestFrame = i;
+                }
+                else if (meta.EncodingWidth > maxWidth)
+                {
+                    maxWidth = meta.EncodingWidth;
+                    bestFrame = i;
+                }
+            }
+            i++;
+        }
+        return bestFrame;
+    }
+#endif
 }
