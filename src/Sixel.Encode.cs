@@ -83,7 +83,7 @@ public partial class Sixel
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
         if ((meta.DecodedImageFormat?.Name == "CUR" ||
             meta.DecodedImageFormat?.Name == "ICO") &&
-            img.Frames.Count > 0)
+            img.Frames.Count > 1)
             img = img.Frames.ExportFrame(GetBestIconFrame(img, new(canvasWidth, canvasHeight)));
 #endif
 
