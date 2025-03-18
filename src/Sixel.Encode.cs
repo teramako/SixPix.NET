@@ -63,6 +63,11 @@ public partial class Sixel
             canvasWidth = size?.Width ?? 1;
             canvasHeight = (canvasWidth * img.Height) / img.Width;
         }
+        else if (size?.Height > 0 && size?.Width > 0)
+        {
+            canvasWidth = size?.Width ?? 1;
+            canvasHeight = size?.Height ?? 1;
+        }
 
         // TODO: Use maximum size based on size of terminal window?
         if (canvasWidth < 1)
