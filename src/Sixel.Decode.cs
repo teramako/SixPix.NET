@@ -65,7 +65,7 @@ public partial class Sixel
                 break;
         }
 
-        var campusSize = new Size(200, 200);
+        var canvasSize = new Size(200, 200);
         var resizeOption = new ResizeOptions()
         {
             Mode = ResizeMode.BoxPad,
@@ -73,9 +73,9 @@ public partial class Sixel
         };
 
 #if IMAGESHARP4 // ImageSharp v4.0
-        var image = new Image<Rgba32>(new Configuration(), campusSize.Width, campusSize.Height, Rgb24.FromScaledVector4(Color.White.ToScaledVector4()));
+        var image = new Image<Rgba32>(new Configuration(), canvasSize.Width, canvasSize.Height, Rgba32.FromScaledVector4(Color.White.ToScaledVector4()));
 #else
-        var image = new Image<Rgba32>(campusSize.Width, campusSize.Height, Color.White);
+        var image = new Image<Rgba32>(canvasSize.Width, canvasSize.Height, Color.White);
 #endif
 
 
@@ -118,10 +118,10 @@ public partial class Sixel
                     if (param.Count < 4)
                         throw new InvalidDataException($"Invalid Header: {string.Join(';', param)}");
 
-                    campusSize.Width = param[2];
-                    campusSize.Height = param[3];
-                    DebugPrint($"Resize Image {image.Size} => {campusSize}", lf: true);
-                    resizeOption.Size = campusSize;
+                    canvasSize.Width = param[2];
+                    canvasSize.Height = param[3];
+                    DebugPrint($"Resize Image {image.Size} => {canvasSize}", lf: true);
+                    resizeOption.Size = canvasSize;
                     image.Mutate(x => x.Resize(resizeOption));
                     continue;
                 case 0x23: // '#'
@@ -157,22 +157,22 @@ public partial class Sixel
                 case 0x2d: // '-'
                     currentX = 0;
                     currentY += 6;
-                    if (campusSize.Height < currentY + 6)
+                    if (canvasSize.Height < currentY + 6)
                     {
-                        campusSize.Height *= 2;
-                        DebugPrint($"Resize Image Height {image.Size} => {campusSize}", lf: true);
-                        resizeOption.Size = campusSize;
+                        canvasSize.Height *= 2;
+                        DebugPrint($"Resize Image Height {image.Size} => {canvasSize}", lf: true);
+                        resizeOption.Size = canvasSize;
                         image.Mutate(x => x.Resize(resizeOption));
                     }
                     break;
                 case > 0x3E and < 0x7F:
                     sixelBit = currentChar - 0x3F;
 
-                    if (campusSize.Width < currentX + repeatCount)
+                    if (canvasSize.Width < currentX + repeatCount)
                     {
-                        campusSize.Width *= 2;
-                        DebugPrint($"Resize Image Width {image.Size} => {campusSize}", lf: true);
-                        resizeOption.Size = campusSize;
+                        canvasSize.Width *= 2;
+                        DebugPrint($"Resize Image Width {image.Size} => {canvasSize}", lf: true);
+                        resizeOption.Size = canvasSize;
                         image.Mutate(x => x.Resize(resizeOption));
                     }
                     for (var x = currentX; x < currentX + repeatCount; x++)
