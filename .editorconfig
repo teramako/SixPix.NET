@@ -1,0 +1,33 @@
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+indent_style = space
+insert_final_newline = true
+
+[*.cs]
+indent_size = 4
+max_line_length = 120
+trim_trailing_whitespace = true
+
+# IDE0010: Populate switch
+dotnet_diagnostic.IDE0010.severity = none
+# IDE0011: Add braces to 'if' statement.
+dotnet_diagnostic.IDE0011.severity = none
+# IDE0040: Accessibility modifiers required (escalated to a build warning)
+dotnet_diagnostic.IDE0040.severity = warning
+# IDE0160: Convert to block scoped namespace
+dotnet_diagnostic.IDE0160.severity = none
+# IDE0008: Use explicit type instead of 'var'
+dotnet_diagnostic.IDE0008.severity = none
+# IDE0058: Expression value is never used
+dotnet_diagnostic.IDE0058.severity = none
+# IDE0072: Populate switch
+dotnet_diagnostic.IDE0072.severity = none
+
+
+[*.md]
+indent_size = 2
+max_line_length = 0
+trim_trailing_whitespace = false
