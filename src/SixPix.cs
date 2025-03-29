@@ -5,7 +5,7 @@ namespace SixPix;
 public partial class Sixel
 {
     [Conditional("DEBUG")]
-    static void DebugPrint(ReadOnlySpan<char> msg, ConsoleColor fg = ConsoleColor.Magenta, bool lf = false)
+    private static void DebugPrint(ReadOnlySpan<char> msg, ConsoleColor fg = ConsoleColor.Magenta, bool lf = false)
     {
         var currentFg = Console.ForegroundColor;
         Console.ForegroundColor = fg;

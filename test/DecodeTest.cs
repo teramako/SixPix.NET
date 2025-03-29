@@ -6,7 +6,7 @@ namespace test;
 [TestClass]
 public class DecodeTest
 {
-    const char ESC = '\x1b';
+    private const char ESC = '\x1b';
 
     [TestMethod("[Decode] RGB color")]
     public void TestMethod1()
@@ -48,25 +48,25 @@ public class DecodeTest
         Console.WriteLine(sixelString);
         using var image = Sixel.Decode(sixelString);
 
-        Assert.AreEqual<int>(10, image.Width);
-        Assert.AreEqual<int>(14 * 6 + 1, image.Height);
+        Assert.AreEqual(10, image.Width);
+        Assert.AreEqual((14 * 6) + 1, image.Height);
 
         var i = 0;
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0x00, 0x00), image[0, 6 * i++], $"0x{i}: #000000");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0x00, 0xFF), image[0, 6 * i++], $"0x{i}: #0000FF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x80, 0x00, 0xFF), image[0, 6 * i++], $"0x{i}: #8000FF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0x00, 0xFF), image[0, 6 * i++], $"0x{i}: #FF00FF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0x00, 0x80), image[0, 6 * i++], $"0x{i}: #FF0080");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0x00, 0x00), image[0, 6 * i++], $"0x{i}: #FF0000");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0x80, 0x00), image[0, 6 * i++], $"0x{i}: #FF8000");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0xFF, 0x00), image[0, 6 * i++], $"0x{i}: #FFFF00");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x80, 0xFF, 0x00), image[0, 6 * i++], $"0x{i}: #80FF00");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0xFF, 0x00), image[0, 6 * i++], $"0x{i}: #00FF00");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0xFF, 0x80), image[0, 6 * i++], $"0x{i}: #00FF80");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0xFF, 0xFF), image[0, 6 * i++], $"0x{i}: #00FFFF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0x80, 0xFF), image[0, 6 * i++], $"0x{i}: #0080FF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0xFF, 0xFF), image[0, 6 * i++], $"0x{i}: #FFFFFF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0x00, 0x00), image[5, 6 * i],   $"5x{i}: #000000");
+        Assert.AreEqual(new Rgba32(0x00, 0x00, 0x00), image[0, 6 * i++], $"0x{i}: #000000");
+        Assert.AreEqual(new Rgba32(0x00, 0x00, 0xFF), image[0, 6 * i++], $"0x{i}: #0000FF");
+        Assert.AreEqual(new Rgba32(0x80, 0x00, 0xFF), image[0, 6 * i++], $"0x{i}: #8000FF");
+        Assert.AreEqual(new Rgba32(0xFF, 0x00, 0xFF), image[0, 6 * i++], $"0x{i}: #FF00FF");
+        Assert.AreEqual(new Rgba32(0xFF, 0x00, 0x80), image[0, 6 * i++], $"0x{i}: #FF0080");
+        Assert.AreEqual(new Rgba32(0xFF, 0x00, 0x00), image[0, 6 * i++], $"0x{i}: #FF0000");
+        Assert.AreEqual(new Rgba32(0xFF, 0x80, 0x00), image[0, 6 * i++], $"0x{i}: #FF8000");
+        Assert.AreEqual(new Rgba32(0xFF, 0xFF, 0x00), image[0, 6 * i++], $"0x{i}: #FFFF00");
+        Assert.AreEqual(new Rgba32(0x80, 0xFF, 0x00), image[0, 6 * i++], $"0x{i}: #80FF00");
+        Assert.AreEqual(new Rgba32(0x00, 0xFF, 0x00), image[0, 6 * i++], $"0x{i}: #00FF00");
+        Assert.AreEqual(new Rgba32(0x00, 0xFF, 0x80), image[0, 6 * i++], $"0x{i}: #00FF80");
+        Assert.AreEqual(new Rgba32(0x00, 0xFF, 0xFF), image[0, 6 * i++], $"0x{i}: #00FFFF");
+        Assert.AreEqual(new Rgba32(0x00, 0x80, 0xFF), image[0, 6 * i++], $"0x{i}: #0080FF");
+        Assert.AreEqual(new Rgba32(0xFF, 0xFF, 0xFF), image[0, 6 * i++], $"0x{i}: #FFFFFF");
+        Assert.AreEqual(new Rgba32(0x00, 0x00, 0x00), image[5, 6 * i], $"5x{i}: #000000");
     }
 
     [TestMethod("[Decode] HLS color")]
@@ -103,21 +103,21 @@ public class DecodeTest
         Console.WriteLine(sixelString);
         using var image = Sixel.Decode(sixelString.Trim());
 
-        Assert.AreEqual<int>(100, image.Width);
-        Assert.AreEqual<int>(12 * 6, image.Height);
+        Assert.AreEqual(100, image.Width);
+        Assert.AreEqual(12 * 6, image.Height);
 
         var i = 0;
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0x00, 0xFF), image[0, 6 * i++], $"{i}: #0000FF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x80, 0x00, 0xFF), image[0, 6 * i++], $"{i}: #8000FF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0x00, 0xFF), image[0, 6 * i++], $"{i}: #FF00FF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0x00, 0x80), image[0, 6 * i++], $"{i}: #FF0080");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0x00, 0x00), image[0, 6 * i++], $"{i}: #FF0000");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0x80, 0x00), image[0, 6 * i++], $"{i}: #FF8000");
-        Assert.AreEqual<Rgba32>(new Rgba32(0xFF, 0xFF, 0x00), image[0, 6 * i++], $"{i}: #FFFF00");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x80, 0xFF, 0x00), image[0, 6 * i++], $"{i}: #80FF00");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0xFF, 0x00), image[0, 6 * i++], $"{i}: #00FF00");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0xFF, 0x80), image[0, 6 * i++], $"{i}: #00FF80");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0xFF, 0xFF), image[0, 6 * i++], $"{i}: #00FFFF");
-        Assert.AreEqual<Rgba32>(new Rgba32(0x00, 0x80, 0xFF), image[0, 6 * i++], $"{i}: #0080FF");
+        Assert.AreEqual(new Rgba32(0x00, 0x00, 0xFF), image[0, 6 * i++], $"{i}: #0000FF");
+        Assert.AreEqual(new Rgba32(0x80, 0x00, 0xFF), image[0, 6 * i++], $"{i}: #8000FF");
+        Assert.AreEqual(new Rgba32(0xFF, 0x00, 0xFF), image[0, 6 * i++], $"{i}: #FF00FF");
+        Assert.AreEqual(new Rgba32(0xFF, 0x00, 0x80), image[0, 6 * i++], $"{i}: #FF0080");
+        Assert.AreEqual(new Rgba32(0xFF, 0x00, 0x00), image[0, 6 * i++], $"{i}: #FF0000");
+        Assert.AreEqual(new Rgba32(0xFF, 0x80, 0x00), image[0, 6 * i++], $"{i}: #FF8000");
+        Assert.AreEqual(new Rgba32(0xFF, 0xFF, 0x00), image[0, 6 * i++], $"{i}: #FFFF00");
+        Assert.AreEqual(new Rgba32(0x80, 0xFF, 0x00), image[0, 6 * i++], $"{i}: #80FF00");
+        Assert.AreEqual(new Rgba32(0x00, 0xFF, 0x00), image[0, 6 * i++], $"{i}: #00FF00");
+        Assert.AreEqual(new Rgba32(0x00, 0xFF, 0x80), image[0, 6 * i++], $"{i}: #00FF80");
+        Assert.AreEqual(new Rgba32(0x00, 0xFF, 0xFF), image[0, 6 * i++], $"{i}: #00FFFF");
+        Assert.AreEqual(new Rgba32(0x00, 0x80, 0xFF), image[0, 6 * i++], $"{i}: #0080FF");
     }
 }

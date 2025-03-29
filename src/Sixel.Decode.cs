@@ -211,16 +211,9 @@ public partial class Sixel
         while (sr.CanRead)
         {
             byteChar = sr.ReadByte();
-            if (byteChar >= 0x30 && byteChar < 0x3A)
+            if (byteChar is >= 0x30 and < 0x3A)
             {
-                if (number >= 0)
-                {
-                    number = number * 10 + byteChar - 0x30;
-                }
-                else
-                {
-                    number = byteChar - 0x30;
-                }
+                number = number >= 0 ? (number * 10) + byteChar - 0x30 : byteChar - 0x30;
                 continue;
             }
             break;
@@ -235,13 +228,13 @@ public partial class Sixel
 
         if (l > 50)
         {
-            max = l + s * (1.0 - l / 100.0);
-            min = l - s * (1.0 - l / 100.0); 
+            max = l + (s * (1.0 - (l / 100.0)));
+            min = l - (s * (1.0 - (l / 100.0)));
         }
         else
         {
-            max = l + (s * l) / 100.0;
-            min = l - (s * l) / 100.0;
+            max = l + (s * l / 100.0);
+            min = l - (s * l / 100.0);
         }
 
         h = (h + 240) % 360;
@@ -250,33 +243,33 @@ public partial class Sixel
         {
             case < 60:
                 r = max;
-                g = min + (max - min) * h / 60.0;
+                g = min + ((max - min) * h / 60.0);
                 b = min;
                 break;
             case < 120:
-                r = min + (max - min) * (120 - h) / 60.0;
+                r = min + ((max - min) * (120 - h) / 60.0);
                 g = max;
                 b = min;
                 break;
             case < 180:
                 r = min;
                 g = max;
-                b = min + (max - min) * (h - 120) / 60.0;
+                b = min + ((max - min) * (h - 120) / 60.0);
                 break;
             case < 240:
                 r = min;
-                g = min + (max - min) * (240 - h) / 60.0;
+                g = min + ((max - min) * (240 - h) / 60.0);
                 b = max;
                 break;
             case < 300:
-                r = min + (max - min) * (h - 240) / 60.0;
+                r = min + ((max - min) * (h - 240) / 60.0);
                 g = min;
                 b = max;
                 break;
             default:
                 r = max;
                 g = min;
-                b = min + (max - min) * (360 - h) / 60.0;
+                b = min + ((max - min) * (360 - h) / 60.0);
                 break;
         }
 

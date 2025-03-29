@@ -12,22 +12,22 @@ namespace SixPix;
 
 public partial class Sixel
 {
-    const char ESC = '\x1b';
-    const string SixelStart = "P7;1;q\"1;1";
-    const string SixelEnd = "\\";
+    private const char ESC = '\x1b';
+    private const string SixelStart = "P7;1;q\"1;1";
+    private const string SixelEnd = "\\";
 
-    const byte specialChNr = (byte)0x6d;
-    const byte specialChCr = (byte)0x64;
+    private const byte specialChNr = 0x6d;
+    private const byte specialChCr = 0x64;
 
     /// <summary>
     /// Encode Image stream to Sixel string
     /// </summary>
     /// <param name="stream">Image stream</param>
     /// <param name="size">Image size (for scaling), or null</param>
-    /// <param name="transp_bg">Make the background color transparent (for some GIF or WebP images)</param>
-    /// <param name="transp_tl">Make the color found at the top left corner (0, 0) transparent</param>
+    /// <param name="transpBg">Make the background color transparent (for some GIF or WebP images)</param>
+    /// <param name="transpTL">Make the color found at the top left corner (0, 0) transparent</param>
     /// <returns>Sixel string</returns>
-    public static ReadOnlySpan<char> Encode(Stream stream, Size? size = null, bool transp_bg = false, bool transp_tl = false)
+    public static ReadOnlySpan<char> Encode(Stream stream, Size? size = null, bool transpBg = false, bool transpTL = false)
     {
         DecoderOptions opt = new();
         if (size?.Width > 0 && size?.Height > 0)
@@ -38,30 +38,30 @@ public partial class Sixel
             };
         }
         using var img = Image.Load<Rgba32>(opt, stream);
-        return Encode(img, size, transp_bg, transp_tl);
+        return Encode(img, size, transpBg, transpTL);
     }
     /// <summary>
     /// Encode Image to Sixel string
     /// </summary>
     /// <param name="img">Image data</param>
     /// <param name="size">Image size (for scaling), or null</param>
-    /// <param name="transp_bg">Make the background color transparent (for some GIF or WebP images)</param>
-    /// <param name="transp_tl">Make the color found at the top left corner (0, 0) transparent</param>
+    /// <param name="transpBg">Make the background color transparent (for some GIF or WebP images)</param>
+    /// <param name="transpTL">Make the color found at the top left corner (0, 0) transparent</param>
     /// <returns>Sixel string</returns>
-    public static ReadOnlySpan<char> Encode(Image<Rgba32> img, Size? size = null, bool transp_bg = false, bool transp_tl = false)
+    public static ReadOnlySpan<char> Encode(Image<Rgba32> img, Size? size = null, bool transpBg = false, bool transpTL = false)
     {
         int canvasWidth = -1, canvasHeight = -1;
         if (size?.Width < 1 && size?.Height > 0)
         {
             // Keep aspect ratio
             canvasHeight = size?.Height ?? 1;
-            canvasWidth = (canvasHeight * img.Width) / img.Height;
+            canvasWidth = canvasHeight * img.Width / img.Height;
         }
         else if (size?.Height < 1 && size?.Width > 0)
         {
             // Keep aspect ratio
             canvasWidth = size?.Width ?? 1;
-            canvasHeight = (canvasWidth * img.Height) / img.Width;
+            canvasHeight = canvasWidth * img.Height / img.Width;
         }
         else if (size?.Height > 0 && size?.Width > 0)
         {
@@ -123,7 +123,7 @@ public partial class Sixel
         var sb = new StringBuilder();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
         sb.Append(ESC + SixelStart)
-          .Append($";{canvasWidth};{canvasHeight}");
+          .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
         DebugPrint($"Palette Start Length={colorPalette.Length}", lf: true);
 
@@ -143,14 +143,14 @@ public partial class Sixel
 #else
             else if (tc is not null && tc == Color.FromRgb(rgb.R, rgb.G, rgb.B))
                 (r, g, b) = (0, 0, 0);
-            else if (transp_bg && bg is not null && bg == Color.FromRgb(rgb.R, rgb.G, rgb.B))
+            else if (transpBg && bg is not null && bg == Color.FromRgb(rgb.R, rgb.G, rgb.B))
                 (r, g, b) = (0, 0, 0);
 #endif
             else
                 (r, g, b) = (rgb.R * 100 / 0xFF, rgb.G * 100 / 0xFF, rgb.B * 100 / 0xFF);
 
             // DECGCI (#): Graphics Color Introducer
-            sb.Append($"#{i};2;{r:d};{g:d};{b:d}");
+            sb.Append($"#{i};2;{r:d};{g:d};{b:d}".AsSpan());
             DebugPrint($"#{i};2;", ConsoleColor.Red);
             DebugPrint($"{r:d};{g:d};{b:d}", ConsoleColor.Green, true);
         }
@@ -162,7 +162,8 @@ public partial class Sixel
         var ch0 = specialChNr;
         for (var (z, y) = (0, 0); z < (canvasHeight + 5) / 6; z++, y = z * 6)
         {
-            if (z > 0) {
+            if (z > 0)
+            {
                 // DECGNL (-): Graphics Next Line
                 sb.Append('-');
                 DebugPrint("-", lf: true);
@@ -175,14 +176,14 @@ public partial class Sixel
                     var idx = colorPalette.IndexOf(img[x, y]);
                     if (colorPalette[idx].A == 0)
                         cset[idx] = false;
-                    else if (transp_tl && idx == 0)
+                    else if (transpTL && idx == 0)
                         cset[idx] = false;
-                    else if (transp_bg && bg is not null && bg.Equals(colorPalette[idx]))
+                    else if (transpBg && bg is not null && bg.Equals(colorPalette[idx]))
                         cset[idx] = false;
                     else
                         cset[idx] = true;
 
-                    buffer[canvasWidth * idx + x] |= (byte)(1 << p);
+                    buffer[(canvasWidth * idx) + x] |= (byte)(1 << p);
                 }
             }
             bool first = true;
@@ -199,7 +200,7 @@ public partial class Sixel
                 }
                 first = false;
 
-                sb.Append($"#{n}");
+                sb.Append($"#{n}".AsSpan());
                 DebugPrint($"#{n}", ConsoleColor.Red, false);
                 var cnt = 0;
                 byte ch;
@@ -208,7 +209,7 @@ public partial class Sixel
                 for (var x = 0; x < canvasWidth; x++)
                 {
                     // make sixel character from 6 pixels
-                    bufIndex = canvasWidth * n + x;
+                    bufIndex = (canvasWidth * n) + x;
                     ch = buffer[bufIndex];
                     buffer[bufIndex] = 0;
                     if (ch0 < 0x40 && ch != ch0)
@@ -234,7 +235,7 @@ public partial class Sixel
                                 DebugPrint($"{sixelChar}{sixelChar}{sixelChar}", ConsoleColor.Yellow);
                                 break;
                             case > 0:
-                                sb.Append($"!{cnt}").Append(sixelChar);
+                                sb.Append($"!{cnt}".AsSpan()).Append(sixelChar);
                                 DebugPrint($"!{cnt}{sixelChar}", ConsoleColor.Yellow);
                                 break;
                         }
@@ -266,7 +267,7 @@ public partial class Sixel
                             DebugPrint($"{sixelChar}{sixelChar}{sixelChar}", ConsoleColor.Cyan);
                             break;
                         case > 0:
-                            sb.Append($"!{cnt}").Append(sixelChar);
+                            sb.Append($"!{cnt}".AsSpan()).Append(sixelChar);
                             DebugPrint($"!{cnt}{sixelChar}", ConsoleColor.Cyan);
                             break;
                     }

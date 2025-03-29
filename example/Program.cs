@@ -125,7 +125,7 @@ if (IsBinary(infile))
 }
 else
 {
-    if (fileInfo.Extension != ".six" && fileInfo.Extension != ".sixel" && fileInfo.Extension != ".txt")
+    if (fileInfo.Extension is not ".six" and not ".sixel" and not ".txt")
         Console.WriteLine("Unknown filetype, attempting to decode from Sixel string ...");
 
     if (string.IsNullOrEmpty(outfile))
