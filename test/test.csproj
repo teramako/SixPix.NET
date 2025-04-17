@@ -7,6 +7,11 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!--<DefineConstants>$(DefineConstants);IMAGESHARP4</DefineConstants>-->
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);SIXPIX_DEBUG</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

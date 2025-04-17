@@ -12,8 +12,16 @@ namespace SixPix;
 
 public partial class Sixel
 {
+    public enum Transparency
+    {
+        Default,    // Standard transparency (palette or alpha channel)
+        TopLeft,    // Make the color found at the top left corner (0, 0) transparent
+        Background, // Make the background color transparent (for some GIF or WebP images)
+        None        // No transparency
+    }
     private const char ESC = '\x1b';
-    private const string SixelStart = "P7;1;q\"1;1";
+    private const string SixelOpaqueStart = "P7;0;q\"1;1";
+    private const string SixelTranspStart = "P7;1;q\"1;1";
     private const string SixelEnd = "\\";
 
     private const byte specialChNr = 0x6d;
@@ -24,10 +32,9 @@ public partial class Sixel
     /// </summary>
     /// <param name="stream">Image stream</param>
     /// <param name="size">Image size (for scaling), or null</param>
-    /// <param name="transpBg">Make the background color transparent (for some GIF or WebP images)</param>
-    /// <param name="transpTL">Make the color found at the top left corner (0, 0) transparent</param>
+    /// <param name="transp">Transparency enum</param>
     /// <returns>Sixel string</returns>
-    public static ReadOnlySpan<char> Encode(Stream stream, Size? size = null, bool transpBg = false, bool transpTL = false)
+    public static ReadOnlySpan<char> Encode(Stream stream, Size? size = null, Transparency transp = Transparency.Default)
     {
         DecoderOptions opt = new();
         if (size?.Width > 0 && size?.Height > 0)
@@ -38,17 +45,16 @@ public partial class Sixel
             };
         }
         using var img = Image.Load<Rgba32>(opt, stream);
-        return Encode(img, size, transpBg, transpTL);
+        return Encode(img, size, transp);
     }
     /// <summary>
     /// Encode Image to Sixel string
     /// </summary>
     /// <param name="img">Image data</param>
     /// <param name="size">Image size (for scaling), or null</param>
-    /// <param name="transpBg">Make the background color transparent (for some GIF or WebP images)</param>
-    /// <param name="transpTL">Make the color found at the top left corner (0, 0) transparent</param>
+    /// <param name="transp">Transparency enum</param>
     /// <returns>Sixel string</returns>
-    public static ReadOnlySpan<char> Encode(Image<Rgba32> img, Size? size = null, bool transpBg = false, bool transpTL = false)
+    public static ReadOnlySpan<char> Encode(Image<Rgba32> img, Size? size = null, Transparency transp = Transparency.Default)
     {
         int canvasWidth = -1, canvasHeight = -1;
         if (size?.Width < 1 && size?.Height > 0)
@@ -122,7 +128,11 @@ public partial class Sixel
         //
         var sb = new StringBuilder();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
-        sb.Append(ESC + SixelStart)
+        
+        var sixelStart = SixelTranspStart;
+        if (transp == Transparency.None)
+            sixelStart = SixelOpaqueStart;
+        sb.Append(ESC + sixelStart)
           .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
         DebugPrint($"Palette Start Length={colorPalette.Length}", lf: true);
@@ -138,12 +148,12 @@ public partial class Sixel
 #if IMAGESHARP4 // ImageSharp v4.0
             else if (tc is not null && tc == Color.FromScaledVector(new Vector4(rgb.R, rgb.G, rgb.B, 0)))
                 (r, g, b) = (0, 0, 0);
-            else if (transp_bg && bg is not null && bg == Color.FromScaledVector(new Vector4(rgb.R, rgb.G, rgb.B, 0)))
+            else if (transp == Transparency.Background && bg is not null && bg == Color.FromScaledVector(new Vector4(rgb.R, rgb.G, rgb.B, 0)))
                 (r, g, b) = (0, 0, 0);
 #else
             else if (tc is not null && tc == Color.FromRgb(rgb.R, rgb.G, rgb.B))
                 (r, g, b) = (0, 0, 0);
-            else if (transpBg && bg is not null && bg == Color.FromRgb(rgb.R, rgb.G, rgb.B))
+            else if (transp == Transparency.Background && bg is not null && bg == Color.FromRgb(rgb.R, rgb.G, rgb.B))
                 (r, g, b) = (0, 0, 0);
 #endif
             else
@@ -176,9 +186,9 @@ public partial class Sixel
                     var idx = colorPalette.IndexOf(img[x, y]);
                     if (colorPalette[idx].A == 0)
                         cset[idx] = false;
-                    else if (transpTL && idx == 0)
+                    else if (transp == Transparency.TopLeft && idx == 0)
                         cset[idx] = false;
-                    else if (transpBg && bg is not null && bg.Equals(colorPalette[idx]))
+                    else if (transp == Transparency.Background && bg is not null && bg.Equals(colorPalette[idx]))
                         cset[idx] = false;
                     else
                         cset[idx] = true;
