@@ -19,10 +19,10 @@ public partial class Sixel
         Background, // Make the background color transparent (for some GIF or WebP images)
         None        // No transparency
     }
-    private const char ESC = '\x1b';
-    private const string SixelOpaqueStart = "P7;0;q\"1;1";
-    private const string SixelTranspStart = "P7;1;q\"1;1";
-    private const string SixelEnd = "\\";
+    public const char ESC = '\x1b';
+    public const string OpaqueStart = "P7;0;q\"1;1";
+    public const string TranspStart = "P7;1;q\"1;1";
+    public const string End = "\\";
 
     private const byte specialChNr = 0x6d;
     private const byte specialChCr = 0x64;
@@ -166,9 +166,9 @@ public partial class Sixel
         var sb = new StringBuilder();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
         
-        var sixelStart = SixelTranspStart;
+        var sixelStart = TranspStart;
         if (transp == Transparency.None)
-            sixelStart = SixelOpaqueStart;
+            sixelStart = OpaqueStart;
         sb.Append(ESC + sixelStart)
           .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
@@ -322,7 +322,7 @@ public partial class Sixel
                 ch0 = specialChCr;
             }
         }
-        sb.Append(ESC + SixelEnd);
+        sb.Append(ESC + End);
         DebugPrint("End", ConsoleColor.DarkGray, true);
         return sb.ToString();
     }
