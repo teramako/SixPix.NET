@@ -18,7 +18,7 @@ Sixel.Transparency transp = Sixel.Transparency.Default;
 int w = -1, h = -1, f = 0, rate = 10;
 bool getData = false, anim = false, animForever = false;
 string infile = "", outfile = "";
-const string MAP8_SIXEL = "Pq\"1;0;93;14#0;2;60;0;0#1;2;0;66;0#2;2;56;60;0#3;2;47;38;97#4;2;72;0;69#5;2;0;66;72#6;2;72;72;72#7;2;0;0;0#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11B#1!12B#2!12B#3!12B#4!12B#5!12B#6!12B#7!10B\\";
+const string MAP8_SIXEL = "Pq\"1;1;93;14#0;2;60;0;0#1;2;0;66;0#2;2;56;60;0#3;2;47;38;97#4;2;72;0;69#5;2;0;66;72#6;2;72;72;72#7;2;0;0;0#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11B#1!12B#2!12B#3!12B#4!12B#5!12B#6!12B#7!10B\\";
 
 foreach (var arg in args)
 {
@@ -297,11 +297,22 @@ static bool IsBinary(string filePath)
 
 static void PrintUsage()
 {
+    Console.WriteLine(MAP8_SIXEL);
+    if (Sixel.IsSupported())
+    {
+        var cellSize = Sixel.GetCellSize();
+        var windowCharSize = Sixel.GetWindowCharSize();
+        var windowPixelSize = Sixel.GetWindowPixelSize();
+
+        Console.WriteLine($"Sixel is supported! [Cell Size:{cellSize?.Width}x{cellSize?.Height}; " +
+            $"Current Window:{windowPixelSize?.Width}x{windowPixelSize?.Height}px, {windowCharSize?.Width}x{windowCharSize?.Height}ch]");
+    }
+    else
+        Console.WriteLine("If you see colored bands above, your terminal supports Sixel.");
+
+    Console.WriteLine();
     //----------------|---------10--------20--------30--------40--------50--------60--------70--------80
     //----------------|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|
-    Console.WriteLine(MAP8_SIXEL);
-    Console.WriteLine("[If you see colored bands above, your terminal supports Sixel!]");
-    Console.WriteLine();
     Console.WriteLine("Encoding usage:");
     Console.WriteLine("     SixPix.exe [/t|/T|/b] [/w:<W>] [/h:<H>] [/a|/A|/f:<F>] [/r:R] <in> [<out>]");
     Console.WriteLine(" /t          : Disable transparency, or enable for animations (optional)");
@@ -311,8 +322,8 @@ static void PrintUsage()
     Console.WriteLine(" /h:<Height> : Height in pixels (optional)");
     Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional)");
     Console.WriteLine(" /A          : Animate forever, Ctrl+C to stop (optional)");
-    Console.WriteLine(" /r:<Rate>   : Animation framerate (in frames per second), default=10");
     Console.WriteLine(" /f:<Frame>  : Display a single frame of a multi-frame image (optional)");
+    Console.WriteLine(" /r:<Rate>   : Animation framerate (in frames per second), default=10");
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
     Console.WriteLine(" <in>        : Image filename to encode to Sixel (required), supports BMP, CUR,");
     Console.WriteLine("               GIF, ICO, JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
