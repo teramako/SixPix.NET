@@ -24,7 +24,7 @@ public partial class Sixel
         // The "4" indicates Sixel support
         var response = GetCtrlSeqResponse(CSI_DEVICE_ATTRIBUTES);
 
-        if (response.Contains(";4;"))
+        if (response.Contains(";4;") || response.Contains(";4c"))
             return true;
 
         return false;
