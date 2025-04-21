@@ -3,7 +3,7 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixPix;
 using System.Text;
 
-#if DEBUG
+#if SIXPIX_DEBUG
 Console.WriteLine("Hello, SixPix!");
 #endif
 
@@ -13,7 +13,7 @@ if (args.Length == 0)
     Environment.Exit(1);
 }
 
-bool transp_bg = false, transp_tl = false;
+Sixel.Transparency transp = Sixel.Transparency.Default;
 int w = -1, h = -1;
 string infile = "", outfile = "";
 const string MAP8_SIXEL = "Pq\"1;0;93;14#0;2;60;0;0#1;2;0;66;0#2;2;56;60;0#3;2;47;38;97#4;2;72;0;69#5;2;0;66;72#6;2;72;72;72#7;2;0;0;0#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11B#1!12B#2!12B#3!12B#4!12B#5!12B#6!12B#7!10B\\";
@@ -27,10 +27,14 @@ foreach (var arg in args)
         switch (param[0])
         {
             case 't':
-                transp_bg = true;
+                transp = Sixel.Transparency.None;
                 break;
             case 'T':
-                transp_tl = true;
+                transp = Sixel.Transparency.TopLeft;
+                break;
+            case 'b':
+            case 'B':
+                transp = Sixel.Transparency.Background;
                 break;
             case 'w':
             case 'W':
@@ -46,14 +50,14 @@ foreach (var arg in args)
                 else if (param.Contains(':'))
                     _ = int.TryParse(param[(param.IndexOf(':') + 1)..], out h);
                 break;
-            case 'o':
+            case 'o':    // output filename (explicit instead of based on position)
             case 'O':
                 if (param.Contains('='))
                     outfile = param[(param.IndexOf('=') + 1)..];
                 else if (param.Contains(':'))
                     outfile = param[(param.IndexOf(':') + 1)..];
                 break;
-            case 'i':
+            case 'i':    // input filename (explicit instead of based on position)
             case 'I':
                 if (param.Contains('='))
                     infile = param[(param.IndexOf('=') + 1)..];
@@ -94,8 +98,8 @@ if (IsBinary(infile))
         fs.Seek(0, 0);
 
         // Encode: Image stream -> Sixel string (ReadOnlySpan<char>)
-        var sixelString = Sixel.Encode(fs, new Size(w, h), transp_bg, transp_tl);
-#if DEBUG
+        var sixelString = Sixel.Encode(fs, new Size(w, h), transp);
+#if SIXPIX_DEBUG
         var elapsed = DateTime.Now - start;
         Console.WriteLine($"Elapsed {elapsed.TotalMilliseconds} ms");
 #endif
@@ -118,7 +122,7 @@ if (IsBinary(infile))
     catch (Exception e)
     {
         Console.Error.WriteLine($"Error: {e.Message}");
-#if DEBUG
+#if SIXPIX_DEBUG
         Console.Error.WriteLine(e.StackTrace);
 #endif
     }
@@ -144,7 +148,7 @@ else
     {
         using var fs = fileInfo.OpenRead();
         using var image = Sixel.Decode(fs);
-#if DEBUG
+#if SIXPIX_DEBUG
         var elapsed = DateTime.Now - start;
         Console.WriteLine($"Elapsed {elapsed.TotalMilliseconds} ms");
 #endif
@@ -162,7 +166,7 @@ else
     catch (Exception e)
     {
         Console.Error.WriteLine($"Error: {e.Message}");
-#if DEBUG
+#if SIXPIX_DEBUG
         Console.Error.WriteLine(e.StackTrace);
 #endif
     }
@@ -200,23 +204,15 @@ static void PrintUsage()
     Console.WriteLine(MAP8_SIXEL);
     Console.WriteLine("[If you see colored bands above, your terminal supports Sixel!]");
     Console.WriteLine();
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
     Console.WriteLine("Encoding usage:");
-    Console.WriteLine("     SixPix.exe [/t|/T] [/w:<width>] [/h:height>] <filein> [<fileout>]");
-#else
-    Console.WriteLine("Encoding usage: SixPix.exe [/t|/T] <filein> [<fileout>]");
-#endif
-    Console.WriteLine(" /t              : make color at top-left (0,0) transparent (optional)");
-    Console.WriteLine(" /T              : make GIF or WebP background color transparent (optional)");
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
+    Console.WriteLine("     SixPix.exe [/t|/T|/b] [/w:<width>] [/h:height>] <filein> [<fileout>]");
+    Console.WriteLine(" /t              : disable transparency (optional)");
+    Console.WriteLine(" /T              : make color at top-left (0,0) transparent (optional)");
+    Console.WriteLine(" /b              : make GIF or WebP background color transparent (optional)");
     Console.WriteLine(" /w:<width>      : Width in pixels (optional)");
     Console.WriteLine(" /h:<height>     : Height in pixels (optional)");
     Console.WriteLine(" <filein>        : Image file to encode to Sixel (required), supports BMP, CUR,");
     Console.WriteLine("                   GIF, ICO, JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
-#else
-    Console.WriteLine(" <filein>        : Image file to encode to Sixel (required), supports BMP, GIF,");
-    Console.WriteLine("                   JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
-#endif
     Console.WriteLine(" <fileout>[.six] : Output Sixel text filename (optional)");
     Console.WriteLine();
     Console.WriteLine("Decoding usage:");

@@ -12,4 +12,8 @@
     <!--<DefineConstants>$(DefineConstants);IMAGESHARP4</DefineConstants>-->
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);SIXPIX_DEBUG</DefineConstants>
+  </PropertyGroup>
+
 </Project>
