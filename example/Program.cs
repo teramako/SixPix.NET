@@ -30,11 +30,9 @@ foreach (var arg in args)
         {
             case 'a':
                 anim = true;
-                transp = Sixel.Transparency.None;
                 break;
             case 'A':
                 anim = true;
-                transp = Sixel.Transparency.None;
                 animForever = true;
                 break;
             case 'd':
@@ -42,7 +40,7 @@ foreach (var arg in args)
                 getData = true;
                 break;
             case 't':
-                transp = transp == Sixel.Transparency.None ? Sixel.Transparency.Default : Sixel.Transparency.None;
+                transp = Sixel.Transparency.None;
                 break;
             case 'T':
                 transp = Sixel.Transparency.TopLeft;
@@ -107,6 +105,13 @@ foreach (var arg in args)
         infile = arg;
     else
         outfile = arg;
+
+    // Don't allow file output forever
+    if (!string.IsNullOrEmpty(outfile))
+        animForever = false;
+    // Reverse /t logic when displaying animations
+    else if (anim && transp == Sixel.Transparency.None)
+        transp = Sixel.Transparency.Default;
 }
 if (!Path.Exists(infile))
 {
@@ -171,11 +176,13 @@ if (IsBinary(infile))
             if (!string.IsNullOrEmpty(outfile))
             {
                 // Save image to Sixel text file
+                var thisOutfile = outfile;
+                // Add frame number to filename if exporting multiple frames
                 if (anim)
-                    outfile += frame;
-                if (!outfile.Contains('.'))
-                    outfile += ".six";
-                using var wf = new FileStream(outfile, FileMode.Create);
+                    thisOutfile += frame;
+                if (!thisOutfile.Contains('.'))
+                    thisOutfile += ".six";
+                using var wf = new FileStream(thisOutfile, FileMode.Create);
                 Console.WriteLine($"Writing to file {wf.Name} ...");
                 wf.Write(new UTF8Encoding(true).GetBytes(frames[frame]));
             }
@@ -315,12 +322,13 @@ static void PrintUsage()
     //----------------|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|
     Console.WriteLine("Encoding usage:");
     Console.WriteLine("     SixPix.exe [/t|/T|/b] [/w:<W>] [/h:<H>] [/a|/A|/f:<F>] [/r:R] <in> [<out>]");
-    Console.WriteLine(" /t          : Disable transparency, or enable for animations (optional)");
+    Console.WriteLine(" /t          : Disable transparency, or enable when animating (optional)");
     Console.WriteLine(" /T          : Make color at top-left (x=0,y=0) transparent (optional)");
     Console.WriteLine(" /b          : Make GIF or WebP background color transparent (optional)");
     Console.WriteLine(" /w:<Width>  : Width in pixels (optional)");
     Console.WriteLine(" /h:<Height> : Height in pixels (optional)");
-    Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional)");
+    Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional),");
+    Console.WriteLine("               With <out> specified, encode all frames and append frame number");
     Console.WriteLine(" /A          : Animate forever, Ctrl+C to stop (optional)");
     Console.WriteLine(" /f:<Frame>  : Display a single frame of a multi-frame image (optional)");
     Console.WriteLine(" /r:<Rate>   : Animation framerate (in frames per second), default=10");
