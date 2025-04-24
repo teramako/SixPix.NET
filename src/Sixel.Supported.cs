@@ -36,14 +36,14 @@ public static partial class Sixel
     public static Size GetCellSize()
     {
         // cache result, doesn't change with terminal size
-        if (CellSize != null)
-            return CellSize;
+        if (CellSize is not null)
+            return CellSize.Value;
 
         var response = GetCtrlSeqResponse(CSI_CELL_SIZE);
         try
         {
             var parts = response.Split(';', 't');
-            return new()
+            CellSize = new()
             {
                 Width = int.Parse(parts[2]),
                 Height = int.Parse(parts[1])
@@ -54,6 +54,7 @@ public static partial class Sixel
             // Return the default Windows Terminal size if we can't get the size from the terminal.
             return new(10, 20);
         }
+        return CellSize.Value;
     }
 
 
