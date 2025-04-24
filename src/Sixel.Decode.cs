@@ -7,7 +7,7 @@ using SixLabors.ImageSharp.Processing;
 
 namespace SixPix;
 
-public partial class Sixel
+public static partial class Sixel
 {
     /// <summary>
     /// Decode Sixel string to <see cref="SixLabors.ImageSharp.Image"/>

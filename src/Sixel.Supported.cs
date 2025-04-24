@@ -2,7 +2,7 @@ using SixLabors.ImageSharp;
 
 namespace SixPix;
 
-public partial class Sixel
+public static partial class Sixel
 {
     private static Size? CellSize = null;
     private static Size? WindowPixelSize = null;

@@ -18,7 +18,7 @@ public enum Transparency
     None        // No transparency
 }
 
-public partial class Sixel
+public static partial class Sixel
 {
     public const char ESC = '\x1b';
     public const string OpaqueStart = "P7;0;q\"1;1";
@@ -166,7 +166,7 @@ public partial class Sixel
         //
         var sb = new StringBuilder();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
-        
+
         var sixelStart = TranspStart;
         if (transp == Transparency.None)
             sixelStart = OpaqueStart;
