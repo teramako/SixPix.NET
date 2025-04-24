@@ -6,13 +6,11 @@ namespace test;
 [TestClass]
 public class DecodeTest
 {
-    private const char ESC = '\x1b';
-
     [TestMethod("[Decode] RGB color")]
     public void TestMethod1()
     {
         var sixelString = $"""
-            {ESC}P7;1;q"1;1;5;12
+            {Sixel.ESC}P7;1;q"1;1;5;12
             #0;2;0;0;0
             #1;2;0;0;100
             #2;2;50;0;100
@@ -43,7 +41,7 @@ public class DecodeTest
             #13!10~-
             #13!10@$
             #0!5?!5@
-            {ESC}\
+            {Sixel.ESC}\
             """;
         Console.WriteLine(sixelString);
         using var image = Sixel.Decode(sixelString);
@@ -73,7 +71,7 @@ public class DecodeTest
     public void TestMethod2()
     {
         var sixelString = $"""
-            {ESC}P8;1;q"1;1;100;72
+            {Sixel.ESC}P8;1;q"1;1;100;72
             #0;1;0;50;100
             #1;1;30;50;100
             #2;1;60;50;100
@@ -98,7 +96,7 @@ public class DecodeTest
             #9!100~-
             #10!100~-
             #11!100~
-            {ESC}\
+            {Sixel.ESC}\
             """;
         Console.WriteLine(sixelString);
         using var image = Sixel.Decode(sixelString.Trim());

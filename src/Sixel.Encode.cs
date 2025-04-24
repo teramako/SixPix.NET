@@ -19,10 +19,10 @@ public partial class Sixel
         Background, // Make the background color transparent (for some GIF or WebP images)
         None        // No transparency
     }
-    private const char ESC = '\x1b';
-    private const string SixelOpaqueStart = "P7;0;q\"1;1";
-    private const string SixelTranspStart = "P7;1;q\"1;1";
-    private const string SixelEnd = "\\";
+    public const char ESC = '\x1b';
+    public const string OpaqueStart = "P7;0;q\"1;1";
+    public const string TranspStart = "P7;1;q\"1;1";
+    public const string End = "\\";
 
     private const byte specialChNr = 0x6d;
     private const byte specialChCr = 0x64;
@@ -33,8 +33,9 @@ public partial class Sixel
     /// <param name="stream">Image stream</param>
     /// <param name="size">Image size (for scaling), or null</param>
     /// <param name="transp">Transparency enum</param>
+    /// <param name="frame"><see cref="SixLabors.ImageSharp.ImageFrame"/> index, 0=first/only frame, -1=choose best</param>
     /// <returns>Sixel string</returns>
-    public static ReadOnlySpan<char> Encode(Stream stream, Size? size = null, Transparency transp = Transparency.Default)
+    public static ReadOnlySpan<char> Encode(Stream stream, Size? size = null, Transparency transp = Transparency.Default, int frame = -1)
     {
         DecoderOptions opt = new();
         if (size?.Width > 0 && size?.Height > 0)
@@ -45,16 +46,14 @@ public partial class Sixel
             };
         }
         using var img = Image.Load<Rgba32>(opt, stream);
-        return Encode(img, size, transp);
+        return Encode(img, size, transp, frame);
     }
     /// <summary>
-    /// Encode Image to Sixel string
+    /// Encode <see cref="SixLabors.ImageSharp.Image"/> to Sixel string
     /// </summary>
     /// <param name="img">Image data</param>
-    /// <param name="size">Image size (for scaling), or null</param>
-    /// <param name="transp">Transparency enum</param>
-    /// <returns>Sixel string</returns>
-    public static ReadOnlySpan<char> Encode(Image<Rgba32> img, Size? size = null, Transparency transp = Transparency.Default)
+    /// <inheritdoc cref="Encode"/>
+    public static ReadOnlySpan<char> Encode(Image<Rgba32> img, Size? size = null, Transparency transp = Transparency.Default, int frame = -1)
     {
         int canvasWidth = -1, canvasHeight = -1;
         if (size?.Width < 1 && size?.Height > 0)
@@ -83,22 +82,60 @@ public partial class Sixel
 
         var meta = img.Metadata;
         Color? bg = null, tc = null;
+        var format = meta.DecodedImageFormat?.Name;
+        int frameCount = img.Frames.Count;
 
-        if (meta.DecodedImageFormat?.Name == "GIF")
-            bg = meta.GetGifMetadata()?.GlobalColorTable?.Span[meta.GetGifMetadata().BackgroundColorIndex];
-        else if (meta.DecodedImageFormat?.Name == "WEBP")
-            bg = meta.GetWebpMetadata()?.BackgroundColor;
-        else if (meta.GetPngMetadata()?.ColorType == PngColorType.Palette &&
-            meta.DecodedImageFormat?.Name == "PNG")
-            tc = meta.GetPngMetadata()?.TransparentColor;
+        // Detect images with backgrounds that might be made transparent
+        switch (format?.ToUpperInvariant())
+        {
+            case "GIF":
+                var gifMeta = meta.GetGifMetadata();
+                bg = gifMeta.GlobalColorTable?.Span[gifMeta.BackgroundColorIndex];
+                break;
+            case "PNG":
+                var pngMeta = meta.GetPngMetadata();
+                if (pngMeta.ColorType == PngColorType.Palette)
+                    tc = pngMeta.TransparentColor;
+                break;
+            case "WEBP":
+                bg = meta.GetWebpMetadata().BackgroundColor;
+                break;
+        }
+
+        // Detect images with multiple frames
+        switch (format?.ToUpperInvariant())
+        {
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
-        if ((meta.DecodedImageFormat?.Name == "CUR" ||
-            meta.DecodedImageFormat?.Name == "ICO") &&
-            img.Frames.Count > 1)
-            img = img.Frames.ExportFrame(GetBestIconFrame(img, new(canvasWidth, canvasHeight)));
+            case "CUR":
+            case "ICO":
+                if (frameCount > 1)
+                {
+                    if (frame > -1)
+                    {
+                        if (frame < frameCount)
+                            img = img.Frames.ExportFrame(frame);
+                        else
+                            img = img.Frames.ExportFrame(frame % frameCount);
+                    }
+                    else
+                        img = img.Frames.ExportFrame(GetBestFrame(img, new(canvasWidth, canvasHeight)));
+                }
+                break;
 #endif
+            case "GIF":
+            case "PNG":  // APNG animations supported
+            case "TIFF": // Can contain multiple pages
+            case "WEBP":
+                if (frameCount > 1 && frame > -1)
+                    if (frame < frameCount)
+                        img = img.Frames.ExportFrame(frame);
+                    else
+                        img = img.Frames.ExportFrame(frame % frameCount);
+                break;
+        }
 
         DebugPrint($"Width: {canvasWidth}, Height: {canvasHeight}, (bpp={img.PixelType.BitsPerPixel})", lf: true);
+        DebugPrint($"Num ImageFrames: {frameCount}", lf: true);
         if (canvasWidth > 1 && canvasHeight > 1 && img.Width != canvasWidth && img.Height != canvasHeight)
         {
             img.Mutate(x => x.Resize(canvasWidth, canvasHeight));
@@ -129,9 +166,9 @@ public partial class Sixel
         var sb = new StringBuilder();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
         
-        var sixelStart = SixelTranspStart;
+        var sixelStart = TranspStart;
         if (transp == Transparency.None)
-            sixelStart = SixelOpaqueStart;
+            sixelStart = OpaqueStart;
         sb.Append(ESC + sixelStart)
           .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
@@ -285,9 +322,67 @@ public partial class Sixel
                 ch0 = specialChCr;
             }
         }
-        sb.Append(ESC + SixelEnd);
+        sb.Append(ESC + End);
         DebugPrint("End", ConsoleColor.DarkGray, true);
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Get Image format string from <see cref="SixLabors.ImageSharp.Metadata.ImageMetadata"/>
+    /// </summary>
+    /// <param name="stream">Image Stream</param>
+    /// <returns>Format name string, e.g. "PNG"</returns>
+    public static string GetFormat(Stream stream)
+    {
+        return GetFormat(Image.Load<Rgba32>(new(), stream));
+    }
+    /// <param name="img">Image data</param>
+    /// <inheritdoc cref="GetFormat"></inheritdoc>
+    public static string GetFormat(Image<Rgba32> img)
+    {
+        return img.Metadata.DecodedImageFormat?.Name ?? "Unknown";
+    }
+
+    /// <summary>
+    /// Get suggested number of times to repeat animation (GIF, APNG, or WEBP)
+    /// </summary>
+    /// <param name="stream">Image Stream</param>
+    /// <returns>int number of repeats, 0=continuous, -1=not applicable</returns>
+    public static int GetRepeatCount(Stream stream)
+    {
+        return GetRepeatCount(Image.Load<Rgba32>(new(), stream));
+    }
+    /// <param name="img">Image data</param>
+    /// <inheritdoc cref="GetRepeatCount"></inheritdoc>
+    public static int GetRepeatCount(Image<Rgba32> img)
+    {
+        var meta = img.Metadata;
+        switch (meta.DecodedImageFormat?.Name.ToUpperInvariant())
+        {
+            case "GIF":
+                return (int?)meta.GetGifMetadata().RepeatCount ?? -1;
+            case "PNG":
+                return (int?)meta.GetPngMetadata().RepeatCount ?? -1;
+            case "WEBP":
+                return (int?)meta.GetWebpMetadata().RepeatCount ?? -1;
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// Get number of ImageFrames (GIF, APNG, or WEBP for animation frames; TIFF for multiple pages; CUR, ICO for various sizes)
+    /// </summary>
+    /// <param name="stream">Image Stream</param>
+    /// <returns>int number of ImageFrames</returns>
+    public static int GetNumFrames(Stream stream)
+    {
+        return GetNumFrames(Image.Load<Rgba32>(new(), stream));
+    }
+    /// <param name="img">SixLabors.ImageSharp.Image data</param>
+    /// <inheritdoc cref="GetNumFrames"></inheritdoc>
+    public static int GetNumFrames(Image<Rgba32> img)
+    {
+        return img.Frames.Count;
     }
 
     private static ReadOnlySpan<Rgba32> GetColorPalette(Image<Rgba32> image)
@@ -298,16 +393,28 @@ public partial class Sixel
     }
 
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
-    static int GetBestIconFrame(Image<Rgba32> icon, Size? size)
+    /// <summary>
+    /// Determine best-sized ImageFrame (for CUR and ICO)
+    /// </summary>
+    /// <param name="stream">Image Stream</param>
+    /// <param name="size">Size, null=largest ImageFrame</param>
+    /// <returns>int index of best ImageFrame</returns>
+    public static int GetBestFrame(Stream stream, Size? size)
     {
+        return GetBestFrame(Image.Load<Rgba32>(new(), stream), size);
+    }
+    /// <param name="img">Image data</param>
+    /// <inheritdoc cref="GetBestFrame"></inheritdoc>
+    public static int GetBestFrame(Image<Rgba32> img, Size? size)
+    {
+        size ??= new(-1, -1);
         int? sizeDim;
         int bestFrame = 0, bestDim = 0, maxBpp = 0, i = 0;
         if (size?.Width > size?.Height)
             sizeDim = size?.Width;
         else
             sizeDim = size?.Height;
-        DebugPrint(icon.Frames.Count + " ImageFrames:", lf: true);
-        foreach (var frame in icon.Frames)
+        foreach (var frame in img.Frames)
         {
             var meta = frame.Metadata.GetIcoMetadata();
             DebugPrint("  " + i + ":" + meta.EncodingWidth + "x" + meta.EncodingHeight + "x" + (int)meta.BmpBitsPerPixel + "b", lf: true);
@@ -329,7 +436,7 @@ public partial class Sixel
             }
             i++;
         }
-        DebugPrint("Best frame:" + bestFrame, lf: true);
+        DebugPrint("Best ImageFrame: " + bestFrame, lf: true);
         return bestFrame;
     }
 #endif

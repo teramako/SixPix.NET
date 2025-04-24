@@ -1,5 +1,6 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.PixelFormats;
 using SixPix;
 using System.Text;
 
@@ -14,9 +15,10 @@ if (args.Length == 0)
 }
 
 Sixel.Transparency transp = Sixel.Transparency.Default;
-int w = -1, h = -1;
+int w = -1, h = -1, f = 0, rate = 10;
+bool getData = false, anim = false, animForever = false;
 string infile = "", outfile = "";
-const string MAP8_SIXEL = "Pq\"1;0;93;14#0;2;60;0;0#1;2;0;66;0#2;2;56;60;0#3;2;47;38;97#4;2;72;0;69#5;2;0;66;72#6;2;72;72;72#7;2;0;0;0#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11B#1!12B#2!12B#3!12B#4!12B#5!12B#6!12B#7!10B\\";
+const string MAP8_SIXEL = "Pq\"1;1;93;14#0;2;60;0;0#1;2;0;66;0#2;2;56;60;0#3;2;47;38;97#4;2;72;0;69#5;2;0;66;72#6;2;72;72;72#7;2;0;0;0#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11B#1!12B#2!12B#3!12B#4!12B#5!12B#6!12B#7!10B\\";
 
 foreach (var arg in args)
 {
@@ -26,6 +28,17 @@ foreach (var arg in args)
         param = arg.TrimStart('-', '/');
         switch (param[0])
         {
+            case 'a':
+                anim = true;
+                break;
+            case 'A':
+                anim = true;
+                animForever = true;
+                break;
+            case 'd':
+            case 'D':
+                getData = true;
+                break;
             case 't':
                 transp = Sixel.Transparency.None;
                 break;
@@ -49,6 +62,24 @@ foreach (var arg in args)
                     _ = int.TryParse(param[(param.IndexOf('=') + 1)..], out h);
                 else if (param.Contains(':'))
                     _ = int.TryParse(param[(param.IndexOf(':') + 1)..], out h);
+                break;
+            case 'f':
+            case 'F':
+                if (param.Contains('='))
+                    _ = int.TryParse(param[(param.IndexOf('=') + 1)..], out f);
+                else if (param.Contains(':'))
+                    _ = int.TryParse(param[(param.IndexOf(':') + 1)..], out f);
+                if (f < 0)
+                    f = 0;
+                break;
+            case 'r':
+            case 'R':
+                if (param.Contains('='))
+                    _ = int.TryParse(param[(param.IndexOf('=') + 1)..], out rate);
+                else if (param.Contains(':'))
+                    _ = int.TryParse(param[(param.IndexOf(':') + 1)..], out rate);
+                if (rate < 0)
+                    rate = 0;
                 break;
             case 'o':    // output filename (explicit instead of based on position)
             case 'O':
@@ -74,6 +105,13 @@ foreach (var arg in args)
         infile = arg;
     else
         outfile = arg;
+
+    // Don't allow file output forever
+    if (!string.IsNullOrEmpty(outfile))
+        animForever = false;
+    // Reverse /t logic when displaying animations
+    else if (anim && transp == Sixel.Transparency.None)
+        transp = Sixel.Transparency.Default;
 }
 if (!Path.Exists(infile))
 {
@@ -96,27 +134,94 @@ if (IsBinary(infile))
         using var image = Image.Load(fs);
 
         fs.Seek(0, 0);
-
-        // Encode: Image stream -> Sixel string (ReadOnlySpan<char>)
-        var sixelString = Sixel.Encode(fs, new Size(w, h), transp);
-#if SIXPIX_DEBUG
-        var elapsed = DateTime.Now - start;
-        Console.WriteLine($"Elapsed {elapsed.TotalMilliseconds} ms");
+        var format = Sixel.GetFormat((Image<Rgba32>)image);
+        fs.Seek(0, 0);
+        var numFrames = Sixel.GetNumFrames((Image<Rgba32>)image);
+        if (f >= numFrames)
+        {
+            Console.Error.WriteLine("Error: Specified frame does not exist (index starts at 0).");
+            getData = true;
+        }
+#if IMAGESHARP4
+        fs.Seek(0, 0);
+        var best = Sixel.GetBestFrame((Image<Rgba32>)image, null);
 #endif
+        fs.Seek(0, 0);
+        var numRepeats = Sixel.GetRepeatCount((Image<Rgba32>)image);
+
+        if (getData)
+        {
+            Console.WriteLine("Image Format: " + format);
+            Console.WriteLine("  Num Frames: " + numFrames);
+#if IMAGESHARP4
+            Console.WriteLine("  Best Frame: " + best);
+#endif
+            Console.WriteLine(" Num Repeats: " + numRepeats);
+            Environment.Exit(numFrames);
+        }
+
+        List<string> frames = [];
+        for (int frame = 0; frame < numFrames; frame++)
+        {
+            fs.Seek(0, 0);
+            // Encode: Image stream -> Sixel string (ReadOnlySpan<char>)
+            frames.Add(Sixel.Encode(fs, new Size(w, h), transp, frame).ToString());
+#if SIXPIX_DEBUG
+            if (!anim)
+            {
+                var elapsed = DateTime.Now - start;
+                Console.WriteLine($"Elapsed {elapsed.TotalMilliseconds} ms");
+            }
+#endif
+            if (!string.IsNullOrEmpty(outfile))
+            {
+                // Save image to Sixel text file
+                var thisOutfile = outfile;
+                // Add frame number to filename if exporting multiple frames
+                if (anim)
+                    thisOutfile += frame;
+                if (!thisOutfile.Contains('.'))
+                    thisOutfile += ".six";
+                using var wf = new FileStream(thisOutfile, FileMode.Create);
+                Console.WriteLine($"Writing to file {wf.Name} ...");
+                wf.Write(new UTF8Encoding(true).GetBytes(frames[frame]));
+            }
+        }
 
         if (!string.IsNullOrEmpty(outfile))
+            Environment.Exit(0);
+
+        int x = 0, y = 0;
+        if (numRepeats < 1)
+            numRepeats = 1;
+        if (anim)
         {
-            // Save image to a Sixel text file
-            if (!outfile.Contains('.'))
-                outfile += ".six";
-            using var wf = new FileStream(outfile, FileMode.Create);
-            Console.WriteLine($"Writing to file {wf.Name} ...");
-            wf.Write(new UTF8Encoding(true).GetBytes(sixelString.ToArray()));
+            Console.Clear();
+            (x, y) = Console.GetCursorPosition();
+            if (animForever)
+            {
+                Console.WriteLine("Press Ctrl+C to stop.");
+                y++;
+            }
         }
-        else
+
+        for (int repeat = 0; repeat < numRepeats; repeat++)
         {
-            // Output to stdout
-            Console.Out.WriteLine(sixelString);
+            for (; f < numFrames; f++)
+            {
+                if (anim)
+                    Console.SetCursorPosition(x, y);
+
+                // Output to stdout
+                Console.WriteLine(frames[f]);
+
+                if (anim)
+                    Thread.Sleep(rate * 10);
+                else
+                    break;
+            }
+            if (animForever)
+                repeat = 0;
         }
     }
     catch (Exception e)
@@ -129,7 +234,7 @@ if (IsBinary(infile))
 }
 else
 {
-    if (fileInfo.Extension is not ".six" and not ".sixel" and not ".txt")
+    if (fileInfo.Extension is not ".six" and not ".sixel" and not ".txt" and not ".out")
         Console.WriteLine("Unknown filetype, attempting to decode from Sixel string ...");
 
     if (string.IsNullOrEmpty(outfile))
@@ -199,25 +304,51 @@ static bool IsBinary(string filePath)
 
 static void PrintUsage()
 {
+    Console.WriteLine(MAP8_SIXEL);
+    if (Sixel.IsSupported())
+    {
+        var cellSize = Sixel.GetCellSize();
+        var windowCharSize = Sixel.GetWindowCharSize();
+        var windowPixelSize = Sixel.GetWindowPixelSize();
+
+        Console.WriteLine($"Sixel is supported! [Cell Size:{cellSize?.Width}x{cellSize?.Height}; " +
+            $"Current Window:{windowPixelSize?.Width}x{windowPixelSize?.Height}px, {windowCharSize?.Width}x{windowCharSize?.Height}ch]");
+    }
+    else
+        Console.WriteLine("If you see colored bands above, your terminal supports Sixel.");
+
+    Console.WriteLine();
     //----------------|---------10--------20--------30--------40--------50--------60--------70--------80
     //----------------|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|
-    Console.WriteLine(MAP8_SIXEL);
-    Console.WriteLine("[If you see colored bands above, your terminal supports Sixel!]");
-    Console.WriteLine();
     Console.WriteLine("Encoding usage:");
-    Console.WriteLine("     SixPix.exe [/t|/T|/b] [/w:<width>] [/h:height>] <filein> [<fileout>]");
-    Console.WriteLine(" /t              : disable transparency (optional)");
-    Console.WriteLine(" /T              : make color at top-left (0,0) transparent (optional)");
-    Console.WriteLine(" /b              : make GIF or WebP background color transparent (optional)");
-    Console.WriteLine(" /w:<width>      : Width in pixels (optional)");
-    Console.WriteLine(" /h:<height>     : Height in pixels (optional)");
-    Console.WriteLine(" <filein>        : Image file to encode to Sixel (required), supports BMP, CUR,");
-    Console.WriteLine("                   GIF, ICO, JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
-    Console.WriteLine(" <fileout>[.six] : Output Sixel text filename (optional)");
+    Console.WriteLine("     SixPix.exe [/t|/T|/b] [/w:<W>] [/h:<H>] [/a|/A|/f:<F>] [/r:R] <in> [<out>]");
+    Console.WriteLine(" /t          : Disable transparency, or enable when animating (optional)");
+    Console.WriteLine(" /T          : Make color at top-left (x=0,y=0) transparent (optional)");
+    Console.WriteLine(" /b          : Make GIF or WebP background color transparent (optional)");
+    Console.WriteLine(" /w:<Width>  : Width in pixels (optional)");
+    Console.WriteLine(" /h:<Height> : Height in pixels (optional)");
+    Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional),");
+    Console.WriteLine("               With <out> specified, encode all frames and append frame number");
+    Console.WriteLine(" /A          : Animate forever, Ctrl+C to stop (optional)");
+    Console.WriteLine(" /f:<Frame>  : Display a single frame of a multi-frame image (optional)");
+    Console.WriteLine(" /r:<Rate>   : Animation framerate (in frames per second), default=10");
+#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
+    Console.WriteLine(" <in>        : Image filename to encode to Sixel (required), supports BMP, CUR,");
+    Console.WriteLine("               GIF, ICO, JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
+#else
+    Console.WriteLine(" <in>        : Image filename to encode to Sixel (required), supports BMP, GIF,");
+    Console.WriteLine("               JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
+#endif
+    Console.WriteLine(" <out>[.six] : Output Sixel text filename (optional)");
     Console.WriteLine();
     Console.WriteLine("Decoding usage:");
-    Console.WriteLine("     SixPix.exe <filein> <fileout>");
-    Console.WriteLine(" <filein>        : Sixel text file to decode (required)");
-    Console.WriteLine(" <fileout>[.png] : Output PNG image filename (required)");
+    Console.WriteLine("     SixPix.exe <in> <out>");
+    Console.WriteLine(" <in>        : Sixel text file to decode (required)");
+    Console.WriteLine(" <out>[.png] : Output PNG image filename (required)");
+    Console.WriteLine();
+    Console.WriteLine("Informational usage:");
+    Console.WriteLine("     SixPix.exe /d <in>");
+    Console.WriteLine(" /d          : Get image data (required), return code is number of frames");
+    Console.WriteLine(" <in>        : Image filename to read (required)");
     Console.WriteLine();
 }

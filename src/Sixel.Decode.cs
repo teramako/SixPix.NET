@@ -10,10 +10,10 @@ namespace SixPix;
 public partial class Sixel
 {
     /// <summary>
-    /// Decode Sixel string to Image
+    /// Decode Sixel string to <see cref="SixLabors.ImageSharp.Image"/>
     /// </summary>
     /// <param name="sixelString">Sixel string data</param>
-    /// <returns>Decoded result</returns>
+    /// <returns>Decoded Image</returns>
     /// <exception cref="InvalidDataException">thrown when parsing Sixel data failed.</exception>
     public static Image<Rgba32> Decode(string sixelString)
     {
@@ -22,13 +22,8 @@ public partial class Sixel
         mem.Seek(0, SeekOrigin.Begin);
         return Decode(mem);
     }
-
-    /// <summary>
-    /// Decode Sixel stream to Image
-    /// </summary>
-    /// <param name="stream">Readable stream contains Sixel data</param>
-    /// <returns>Decoded result</returns>
-    /// <exception cref="InvalidDataException">thrown when parsing Sixel data failed.</exception>
+    /// <param name="stream">Readable Stream containing Sixel data</param>
+    /// <inheritdoc cref="Decode"/>
     public static Image<Rgba32> Decode(Stream stream)
     {
         List<Rgba32> _colorMap = [];
