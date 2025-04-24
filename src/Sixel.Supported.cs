@@ -24,10 +24,8 @@ public static partial class Sixel
         // The "4" indicates Sixel support
         var response = GetCtrlSeqResponse(CSI_DEVICE_ATTRIBUTES);
 
-        if (response.Contains(";4;") || response.Contains(";4c"))
-            return true;
-
-        return false;
+        return response.Contains(";4;", StringComparison.Ordinal)
+            || response.EndsWith(";4", StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -44,11 +42,12 @@ public static partial class Sixel
         var response = GetCtrlSeqResponse(CSI_CELL_SIZE);
         try
         {
-            var parts = response.Split(';', 't');
+            Span<Range> ranges = new Range[3];
+            response.Split(ranges, ';');
             CellSize = new()
             {
-                Width = int.Parse(parts[2], CultureInfo.InvariantCulture),
-                Height = int.Parse(parts[1], CultureInfo.InvariantCulture)
+                Width = int.Parse(response[ranges[2]], CultureInfo.InvariantCulture),
+                Height = int.Parse(response[ranges[1]], CultureInfo.InvariantCulture)
             };
         }
         catch
@@ -70,11 +69,12 @@ public static partial class Sixel
         var response = GetCtrlSeqResponse(CSI_WINDOW_PIXSIZE);
         try
         {
-            var parts = response.Split(';', 't');
+            Span<Range> ranges = new Range[3];
+            response.Split(ranges, ';');
             return new()
             {
-                Width = int.Parse(parts[2], CultureInfo.InvariantCulture),
-                Height = int.Parse(parts[1], CultureInfo.InvariantCulture),
+                Width = int.Parse(response[ranges[2]], CultureInfo.InvariantCulture),
+                Height = int.Parse(response[ranges[1]], CultureInfo.InvariantCulture)
             };
         }
         catch
@@ -115,7 +115,7 @@ public static partial class Sixel
     /// Get the response to an ANSI control sequence.
     /// <returns>string response</returns>
     /// </summary>
-    public static string GetCtrlSeqResponse(string ctrlSeq)
+    public static ReadOnlySpan<char> GetCtrlSeqResponse(string ctrlSeq)
     {
         char end = ctrlSeq[^1];
         var response = new StringBuilder();
