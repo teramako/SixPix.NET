@@ -311,8 +311,8 @@ static void PrintUsage()
         var windowCharSize = Sixel.GetWindowCharSize();
         var windowPixelSize = Sixel.GetWindowPixelSize();
 
-        Console.WriteLine($"Sixel is supported! [Cell Size:{cellSize?.Width}x{cellSize?.Height}; " +
-            $"Current Window:{windowPixelSize?.Width}x{windowPixelSize?.Height}px, {windowCharSize?.Width}x{windowCharSize?.Height}ch]");
+        Console.WriteLine($"Sixel is supported! [Cell Size:{cellSize.Width}x{cellSize.Height}; " +
+            $"Current Window:{windowPixelSize.Width}x{windowPixelSize.Height}px, {windowCharSize.Width}x{windowCharSize.Height}ch]");
     }
     else
         Console.WriteLine("If you see colored bands above, your terminal supports Sixel.");

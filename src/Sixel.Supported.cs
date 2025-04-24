@@ -4,9 +4,7 @@ namespace SixPix;
 
 public static partial class Sixel
 {
-    private static Size? CellSize = null;
-    private static Size? WindowPixelSize = null;
-    private static Size? WindowCharSize = null;
+    private static Size? CellSize;
 
     private const string CSI_DEVICE_ATTRIBUTES = "[c";
     private const string CSI_CELL_SIZE = "[16t";
@@ -33,9 +31,9 @@ public static partial class Sixel
     /// <summary>
     /// Get the cell size of the terminal in pixel-sixel size.
     /// </summary>
-    /// <returns><see cref="SixLabors.ImageSharp.Size/> in pixels that will fit in a single character cell.</returns>
+    /// <returns><see cref="Size"/> in pixels that will fit in a single character cell.</returns>
     /// <remarks>The response to the command will look like [6;20;10t where the 20 is height and 10 is width.  Is the 6 the terminal class?</remarks>
-    public static Size? GetCellSize()
+    public static Size GetCellSize()
     {
         // cache result, doesn't change with terminal size
         if (CellSize != null)
@@ -62,8 +60,8 @@ public static partial class Sixel
     /// <summary>
     /// Get the window size in pixels.
     /// </summary>
-    /// <returns><see cref="SixLabors.ImageSharp.Size/> in pixels</returns>
-    public static Size? GetWindowPixelSize()
+    /// <returns><see cref="Size"/> in pixels</returns>
+    public static Size GetWindowPixelSize()
     {
         // don't cache result, since the terminal can be resized
         var response = GetCtrlSeqResponse(CSI_WINDOW_PIXSIZE);
@@ -85,9 +83,9 @@ public static partial class Sixel
     /// <summary>
     /// Get the window size in characters.
     /// </summary>
-    /// <returns><see cref="SixLabors.ImageSharp.Size/> in characters</returns>
+    /// <returns><see cref="Size"/> in characters</returns>
     /// <remarks>Equivalent to (Console.WindowWidth, Console.WindowHeight)</remarks>
-    public static Size? GetWindowCharSize()
+    public static Size GetWindowCharSize()
     {
         // don't cache result, since the terminal can be resized
         return new(Console.WindowWidth, Console.WindowHeight);
