@@ -1,3 +1,4 @@
+using System.Globalization;
 using SixLabors.ImageSharp;
 
 namespace SixPix;
@@ -45,8 +46,8 @@ public static partial class Sixel
             var parts = response.Split(';', 't');
             CellSize = new()
             {
-                Width = int.Parse(parts[2]),
-                Height = int.Parse(parts[1])
+                Width = int.Parse(parts[2], CultureInfo.InvariantCulture),
+                Height = int.Parse(parts[1], CultureInfo.InvariantCulture)
             };
         }
         catch
@@ -71,8 +72,8 @@ public static partial class Sixel
             var parts = response.Split(';', 't');
             return new()
             {
-                Width = int.Parse(parts[2]),
-                Height = int.Parse(parts[1]),
+                Width = int.Parse(parts[2], CultureInfo.InvariantCulture),
+                Height = int.Parse(parts[1], CultureInfo.InvariantCulture),
             };
         }
         catch
