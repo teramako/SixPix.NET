@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using SixLabors.ImageSharp;
 
 namespace SixPix;
@@ -116,18 +117,27 @@ public static partial class Sixel
     /// </summary>
     public static string GetCtrlSeqResponse(string ctrlSeq)
     {
-        char? c;
-        var response = "";
+        char end = ctrlSeq[^1];
+        var response = new StringBuilder();
 
-        // Console.Write($"{ESC}{ctrlSeq}{ST}");
-        Console.Write($"{ESC}{ctrlSeq}");
-        do
-        {
-            c = Console.ReadKey(true).KeyChar;
-            response += c;
-        }
-        while (c != 'c' && Console.KeyAvailable);
-
-        return response;
+        Task.WaitAll([
+            Task.Run(() =>
+            {
+                do
+                {
+                    char c = Console.ReadKey(true).KeyChar;
+                    if (c == end)
+                        break;
+                    if (!char.IsControl(c))
+                        response.Append(c);
+                }
+                while (Console.KeyAvailable);
+            }),
+            Task.Run(() =>
+            {
+                Console.Out.Write($"{ESC}{ctrlSeq}");
+            })
+        ]);
+        return response.ToString();
     }
 }
