@@ -131,12 +131,12 @@ if (IsBinary(infile))
     try
     {
         using var fs = fileInfo.OpenRead();
-        using var image = Image.Load(fs);
+        using var image = Image.Load<Rgba32>(fs);
 
         fs.Seek(0, 0);
-        var format = Sixel.GetFormat((Image<Rgba32>)image);
+        var format = Sixel.GetFormat(image);
         fs.Seek(0, 0);
-        var numFrames = Sixel.GetNumFrames((Image<Rgba32>)image);
+        var numFrames = Sixel.GetNumFrames(image);
         if (f >= numFrames)
         {
             Console.Error.WriteLine("Error: Specified frame does not exist (index starts at 0).");
@@ -144,10 +144,10 @@ if (IsBinary(infile))
         }
 #if IMAGESHARP4
         fs.Seek(0, 0);
-        var best = Sixel.GetBestFrame((Image<Rgba32>)image, null);
+        var best = Sixel.GetBestFrame(image, null);
 #endif
         fs.Seek(0, 0);
-        var numRepeats = Sixel.GetRepeatCount((Image<Rgba32>)image);
+        var numRepeats = Sixel.GetRepeatCount(image);
 
         if (getData)
         {
