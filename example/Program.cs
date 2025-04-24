@@ -14,7 +14,7 @@ if (args.Length == 0)
     Environment.Exit(1);
 }
 
-Sixel.Transparency transp = Sixel.Transparency.Default;
+Transparency transp = Transparency.Default;
 int w = -1, h = -1, f = 0, rate = 10;
 bool getData = false, anim = false, animForever = false;
 string infile = "", outfile = "";
@@ -40,14 +40,14 @@ foreach (var arg in args)
                 getData = true;
                 break;
             case 't':
-                transp = Sixel.Transparency.None;
+                transp = Transparency.None;
                 break;
             case 'T':
-                transp = Sixel.Transparency.TopLeft;
+                transp = Transparency.TopLeft;
                 break;
             case 'b':
             case 'B':
-                transp = Sixel.Transparency.Background;
+                transp = Transparency.Background;
                 break;
             case 'w':
             case 'W':
@@ -110,8 +110,8 @@ foreach (var arg in args)
     if (!string.IsNullOrEmpty(outfile))
         animForever = false;
     // Reverse /t logic when displaying animations
-    else if (anim && transp == Sixel.Transparency.None)
-        transp = Sixel.Transparency.Default;
+    else if (anim && transp == Transparency.None)
+        transp = Transparency.Default;
 }
 if (!Path.Exists(infile))
 {

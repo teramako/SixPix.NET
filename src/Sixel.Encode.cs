@@ -10,15 +10,16 @@ using SixLabors.ImageSharp.Processing;
 
 namespace SixPix;
 
+public enum Transparency
+{
+    Default,    // Standard transparency (palette or alpha channel)
+    TopLeft,    // Make the color found at the top left corner (0, 0) transparent
+    Background, // Make the background color transparent (for some GIF or WebP images)
+    None        // No transparency
+}
+
 public partial class Sixel
 {
-    public enum Transparency
-    {
-        Default,    // Standard transparency (palette or alpha channel)
-        TopLeft,    // Make the color found at the top left corner (0, 0) transparent
-        Background, // Make the background color transparent (for some GIF or WebP images)
-        None        // No transparency
-    }
     public const char ESC = '\x1b';
     public const string OpaqueStart = "P7;0;q\"1;1";
     public const string TranspStart = "P7;1;q\"1;1";

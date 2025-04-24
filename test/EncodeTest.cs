@@ -45,7 +45,7 @@ public class EncodeTest
         Assert.IsTrue(image2FileInfo.Exists);
         using var fs = image2FileInfo.OpenRead();
 
-        var sixel = Sixel.Encode(fs, transp: Sixel.Transparency.None);
+        var sixel = Sixel.Encode(fs, transp: Transparency.None);
 
         Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.OpaqueStart));
         Assert.IsTrue(sixel.EndsWith(Sixel.ESC + Sixel.End));
@@ -63,7 +63,7 @@ public class EncodeTest
         Assert.IsTrue(image2FileInfo.Exists);
         using var fs = image2FileInfo.OpenRead();
 
-        var sixel = Sixel.Encode(fs, transp: Sixel.Transparency.TopLeft);
+        var sixel = Sixel.Encode(fs, transp: Transparency.TopLeft);
 
         Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.TranspStart));
         Assert.IsTrue(sixel.EndsWith(Sixel.ESC + Sixel.End));
