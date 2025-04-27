@@ -89,11 +89,11 @@ public static partial class Sixel
 
         var meta = img.Metadata;
         Color? bg = null, tc = null;
-        var format = meta.DecodedImageFormat?.Name;
+        var format = meta.DecodedImageFormat?.Name.ToUpperInvariant();
         int frameCount = img.Frames.Count;
 
         // Detect images with backgrounds that might be made transparent
-        switch (format?.ToUpperInvariant())
+        switch (format)
         {
             case "GIF":
                 var gifMeta = meta.GetGifMetadata();
@@ -101,7 +101,7 @@ public static partial class Sixel
                 break;
             case "PNG":
                 var pngMeta = meta.GetPngMetadata();
-                if (pngMeta.ColorType == PngColorType.Palette)
+                if (pngMeta.ColorType == SixLabors.ImageSharp.Formats.Png.PngColorType.Palette)
                     tc = pngMeta.TransparentColor;
                 break;
             case "WEBP":
@@ -110,7 +110,7 @@ public static partial class Sixel
         }
 
         // Detect images with multiple frames
-        switch (format?.ToUpperInvariant())
+        switch (format)
         {
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
             case "CUR":
