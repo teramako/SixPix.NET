@@ -36,7 +36,10 @@ public static partial class Sixel
     /// <param name="transp">Transparency enum</param>
     /// <param name="frame"><see cref="SixLabors.ImageSharp.ImageFrame"/> index, 0=first/only frame, -1=choose best</param>
     /// <returns>Sixel string</returns>
-    public static ReadOnlySpan<char> Encode(Stream stream, Size? size = null, Transparency transp = Transparency.Default, int frame = -1)
+    public static ReadOnlySpan<char> Encode(Stream stream,
+                                            Size? size = null,
+                                            Transparency transp = Transparency.Default,
+                                            int frame = -1)
     {
         DecoderOptions opt = new();
         if (size?.Width > 0 && size?.Height > 0)
@@ -54,7 +57,10 @@ public static partial class Sixel
     /// </summary>
     /// <param name="img">Image data</param>
     /// <inheritdoc cref="Encode"/>
-    public static ReadOnlySpan<char> Encode(Image<Rgba32> img, Size? size = null, Transparency transp = Transparency.Default, int frame = -1)
+    public static ReadOnlySpan<char> Encode(Image<Rgba32> img,
+                                            Size? size = null,
+                                            Transparency transp = Transparency.Default,
+                                            int frame = -1)
     {
         int canvasWidth = -1, canvasHeight = -1;
         if (size?.Width < 1 && size?.Height > 0)
@@ -156,9 +162,27 @@ public static partial class Sixel
         else
             DebugPrint($"No Background or Transparent palette color found.", lf: true);
 
+        return EncodeFrame(img.Frames.RootFrame, transp, tc, bg);
+    }
+
+    /// <summary>
+    /// Encode <see cref="ImageFrame"/> to Sixel string
+    /// </summary>
+    /// <param name="frame">a frame part of Image data</param>
+    /// <param name="tc">Transparent <see cref="Color"/> set for the image</param>
+    /// <param name="bg">Background <see cref="Color"/> set for the image</param>
+    /// <inheritdoc cref="Encode(Image{Rgba32}, Size?, Transparency, int)"/>
+    public static string EncodeFrame(ImageFrame<Rgba32> frame,
+                                     Transparency transp = Transparency.Default,
+                                     Color? tc = null,
+                                     Color? bg = null)
+    {
+        int canvasWidth = frame.Width;
+        int canvasHeight = frame.Height;
+
         // カラーパレットの構築
         // Building a color palette
-        ReadOnlySpan<Rgba32> colorPalette = GetColorPalette(img);
+        ReadOnlySpan<Rgba32> colorPalette = GetColorPalette(frame);
 
         //
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
@@ -221,7 +245,7 @@ public static partial class Sixel
             {
                 for (var x = 0; x < canvasWidth; x++)
                 {
-                    var idx = colorPalette.IndexOf(img[x, y]);
+                    var idx = colorPalette.IndexOf(frame[x, y]);
                     if (colorPalette[idx].A == 0)
                         cset[idx] = false;
                     else if (transp == Transparency.TopLeft && idx == 0)
@@ -386,10 +410,10 @@ public static partial class Sixel
         return img.Frames.Count;
     }
 
-    private static ReadOnlySpan<Rgba32> GetColorPalette(Image<Rgba32> image)
+    private static ReadOnlySpan<Rgba32> GetColorPalette(ImageFrame<Rgba32> frame)
     {
-        Span<Rgba32> rgbData = new Rgba32[image.Width * image.Height];
-        image.CopyPixelDataTo(rgbData);
+        Span<Rgba32> rgbData = new Rgba32[frame.Width * frame.Height];
+        frame.CopyPixelDataTo(rgbData);
         return new HashSet<Rgba32>(rgbData.ToArray()).ToArray();
     }
 
