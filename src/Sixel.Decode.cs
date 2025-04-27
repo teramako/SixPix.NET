@@ -132,14 +132,10 @@ public static partial class Sixel
                         switch (cSys)
                         {
                             case 1: // HLS
-                                _colorMap.Add(HLStoRGB(c1, c2, c3));
+                                _colorMap.Add(SixelColor.FromHLS(c1, c2, c3).ToRgba32());
                                 break;
                             case 2: // RGB
-                                var rgb = new Rgba32(
-                                        (byte)Math.Round((double)c1 * 0xFF / 100),
-                                        (byte)Math.Round((double)c2 * 0xFF / 100),
-                                        (byte)Math.Round((double)c3 * 0xFF / 100));
-                                _colorMap.Add(rgb);
+                                _colorMap.Add(SixelColor.FromRgb(c1, c2, c3).ToRgba32());
                                 break;
                             default:
                                 throw new InvalidDataException($"Color map type should be 1 or 2: {cSys}");
@@ -214,62 +210,5 @@ public static partial class Sixel
             break;
         }
         return byteChar;
-    }
-
-    private static Rgba32 HLStoRGB(int h, int l, int s)
-    {
-        double r; double g; double b;
-        double max; double min;
-
-        if (l > 50)
-        {
-            max = l + (s * (1.0 - (l / 100.0)));
-            min = l - (s * (1.0 - (l / 100.0)));
-        }
-        else
-        {
-            max = l + (s * l / 100.0);
-            min = l - (s * l / 100.0);
-        }
-
-        h = (h + 240) % 360;
-
-        switch (h)
-        {
-            case < 60:
-                r = max;
-                g = min + ((max - min) * h / 60.0);
-                b = min;
-                break;
-            case < 120:
-                r = min + ((max - min) * (120 - h) / 60.0);
-                g = max;
-                b = min;
-                break;
-            case < 180:
-                r = min;
-                g = max;
-                b = min + ((max - min) * (h - 120) / 60.0);
-                break;
-            case < 240:
-                r = min;
-                g = min + ((max - min) * (240 - h) / 60.0);
-                b = max;
-                break;
-            case < 300:
-                r = min + ((max - min) * (h - 240) / 60.0);
-                g = min;
-                b = max;
-                break;
-            default:
-                r = max;
-                g = min;
-                b = min + ((max - min) * (360 - h) / 60.0);
-                break;
-        }
-
-        return new Rgba32((byte)Math.Round(r * 0xFF / 100),
-                         (byte)Math.Round(g * 0xFF / 100),
-                         (byte)Math.Round(b * 0xFF / 100));
     }
 }
