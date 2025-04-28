@@ -4,9 +4,9 @@ using System.Numerics;
 using System.Text;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using SixPix.Encoder;
 
 namespace SixPix;
 
@@ -27,6 +27,34 @@ public static partial class Sixel
 
     private const byte specialChNr = 0x6d;
     private const byte specialChCr = 0x64;
+
+    /// <summary>
+    /// Create an encoder instance to convert <paramref name="image"/> to Sixel string
+    /// </summary>
+    /// <param name="image"></param>
+    public static SixelEncoder CreateEncoder(Image<Rgba32> image)
+    {
+        var format = image.Metadata.DecodedImageFormat?.Name.ToUpperInvariant();
+        return new SixelEncoder(image, format);
+    }
+    /// <summary>
+    /// Create an encoder instance to convert the file <paramref name="path"/> to a Sixel string
+    /// </summary>
+    /// <param name="path">Image file path</param>
+    public static SixelEncoder CreateEncoder(string path)
+    {
+        return File.Exists(path)
+            ? CreateEncoder(Image.Load<Rgba32>(path))
+            : throw new FileNotFoundException("File not found", path);
+    }
+    /// <summary>
+    /// Create an encoder instance to convert the file <paramref name="path"/> to a Sixel string
+    /// </summary>
+    /// <param name="stream">a stream for image</param>
+    public static SixelEncoder CreateEncoder(Stream stream)
+    {
+        return CreateEncoder(Image.Load<Rgba32>(stream));
+    }
 
     /// <summary>
     /// Encode Image stream to Sixel string
@@ -101,7 +129,7 @@ public static partial class Sixel
                 break;
             case "PNG":
                 var pngMeta = meta.GetPngMetadata();
-                if (pngMeta.ColorType == PngColorType.Palette)
+                if (pngMeta.ColorType == SixLabors.ImageSharp.Formats.Png.PngColorType.Palette)
                     tc = pngMeta.TransparentColor;
                 break;
             case "WEBP":
