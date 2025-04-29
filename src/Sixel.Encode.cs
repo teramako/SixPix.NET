@@ -182,7 +182,7 @@ public static partial class Sixel
 
         // カラーパレットの構築
         // Building a color palette
-        ReadOnlySpan<Rgba32> colorPalette = GetColorPalette(frame);
+        ReadOnlySpan<SixelColor> colorPalette = GetColorPalette(frame, transp, tc, bg);
 
         //
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
@@ -202,29 +202,11 @@ public static partial class Sixel
         int colorPaletteLength = colorPalette.Length;
         for (var i = 0; i < colorPaletteLength; i++)
         {
-            var rgb = colorPalette[i];
-            int r = 0, g = 0, b = 0;
-
-            if (rgb.A == 0)
-                (r, g, b) = (0, 0, 0);
-#if IMAGESHARP4 // ImageSharp v4.0
-            else if (tc is not null && tc == Color.FromScaledVector(new Vector4(rgb.R, rgb.G, rgb.B, 0)))
-                (r, g, b) = (0, 0, 0);
-            else if (transp == Transparency.Background && bg is not null && bg == Color.FromScaledVector(new Vector4(rgb.R, rgb.G, rgb.B, 0)))
-                (r, g, b) = (0, 0, 0);
-#else
-            else if (tc is not null && tc == Color.FromRgb(rgb.R, rgb.G, rgb.B))
-                (r, g, b) = (0, 0, 0);
-            else if (transp == Transparency.Background && bg is not null && bg == Color.FromRgb(rgb.R, rgb.G, rgb.B))
-                (r, g, b) = (0, 0, 0);
-#endif
-            else
-                (r, g, b) = (rgb.R * 100 / 0xFF, rgb.G * 100 / 0xFF, rgb.B * 100 / 0xFF);
-
             // DECGCI (#): Graphics Color Introducer
-            sb.Append($"#{i};2;{r:d};{g:d};{b:d}".AsSpan());
+            var colorValue = colorPalette[i].ToColorPalette();
+            sb.Append($"#{i};2;{colorValue}".AsSpan());
             DebugPrint($"#{i};2;", ConsoleColor.Red);
-            DebugPrint($"{r:d};{g:d};{b:d}", ConsoleColor.Green, true);
+            DebugPrint(colorValue, ConsoleColor.Green, true);
         }
         DebugPrint("End Palette", ConsoleColor.DarkGray, true);
 
@@ -245,12 +227,14 @@ public static partial class Sixel
             {
                 for (var x = 0; x < canvasWidth; x++)
                 {
-                    var idx = colorPalette.IndexOf(frame[x, y]);
+                    var rgba = frame[x, y];
+                    var sixelColor = SixelColor.FromRgba32(rgba, transp, tc, bg);
+                    var idx = colorPalette.IndexOf(sixelColor);
                     if (colorPalette[idx].A == 0)
                         cset[idx] = false;
                     else if (transp == Transparency.TopLeft && idx == 0)
                         cset[idx] = false;
-                    else if (transp == Transparency.Background && bg is not null && bg.Equals(colorPalette[idx]))
+                    else if (transp == Transparency.Background && bg is not null && bg == rgba)
                         cset[idx] = false;
                     else
                         cset[idx] = true;
@@ -410,11 +394,32 @@ public static partial class Sixel
         return img.Frames.Count;
     }
 
-    private static ReadOnlySpan<Rgba32> GetColorPalette(ImageFrame<Rgba32> frame)
+    /// <summary>
+    /// Build color palette for Sixel
+    /// </summary>
+    private static SixelColor[] GetColorPalette(ImageFrame<Rgba32> frame,
+                                                Transparency transp = Transparency.Default,
+                                                Color? tc = null,
+                                                Color? bg = null)
     {
-        Span<Rgba32> rgbData = new Rgba32[frame.Width * frame.Height];
-        frame.CopyPixelDataTo(rgbData);
-        return new HashSet<Rgba32>(rgbData.ToArray()).ToArray();
+        var palette = new HashSet<SixelColor>();
+        frame.ProcessPixelRows(accessor =>
+        {
+            var pixcelHash = new HashSet<Rgba32>();
+            for (int y = 0; y < accessor.Height; y++)
+            {
+                Span<Rgba32> row = accessor.GetRowSpan(y);
+                for (int x = 0; x < row.Length; x++)
+                {
+                    if (pixcelHash.Add(row[x]))
+                    {
+                        var c = SixelColor.FromRgba32(row[x], transp, tc, bg);
+                        palette.Add(c);
+                    }
+                }
+            }
+        });
+        return [.. palette];
     }
 
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files

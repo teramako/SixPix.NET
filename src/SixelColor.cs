@@ -92,6 +92,34 @@ public record struct SixelColor
                    (byte)Math.Round(b));
     }
 
+    public static SixelColor FromRgba32(Rgba32 rgba,
+                                        Transparency transp = Transparency.Default,
+                                        Color? tc = null,
+                                        Color? bg = null)
+    {
+        var alpha = (byte)Math.Round(rgba.A * 100.0 / 0xFF);
+        if (alpha == 0)
+            return new(0, 0, 0, 0);
+#if IMAGESHARP4 // ImageSharp v4.0
+        else if (tc is not null && tc == Color.FromScaledVector(new Vector4(rgba.R, rgba.G, rgba.B, 0)))
+            return new(0, 0, 0, alpha);
+        else if (transp == Transparency.Background && bg is not null && bg == Color.FromScaledVector(new Vector4(rgba.R, rgba.G, rgba.B, 0)))
+            return new(0, 0, 0, alpha);
+#else
+        else if (tc is not null && tc == Color.FromRgb(rgba.R, rgba.G, rgba.B))
+            return new(0, 0, 0, alpha);
+        else if (transp == Transparency.Background && bg is not null && bg == Color.FromRgb(rgba.R, rgba.G, rgba.B))
+            return new(0, 0, 0, alpha);
+#endif
+        else
+        {
+            return new((byte)Math.Round(rgba.R * 100.0 / 0xFF),
+                       (byte)Math.Round(rgba.G * 100.0 / 0xFF),
+                       (byte)Math.Round(rgba.B * 100.0 / 0xFF),
+                       alpha);
+        }
+    }
+
     /// <summary>
     /// Convert to <see cref="Rgba32"/>
     /// </summary>
@@ -101,5 +129,10 @@ public record struct SixelColor
                    (byte)Math.Round(G * 0xFF / 100.0),
                    (byte)Math.Round(B * 0xFF / 100.0),
                    (byte)Math.Round(A * 0xFF / 100.0));
+    }
+
+    public readonly ReadOnlySpan<char> ToColorPalette()
+    {
+        return $"{R:d};{G:d};{B:d}";
     }
 }
