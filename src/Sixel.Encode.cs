@@ -38,6 +38,7 @@ public static partial class Sixel
         return format switch
         {
             "GIF" => new GifEncoder(image),
+            "PNG" => new PngEncoder(image),
             _ => new SixelEncoder(image, format),
         };
     }
