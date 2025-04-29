@@ -101,7 +101,7 @@ public static partial class Sixel
                 break;
             case "PNG":
                 var pngMeta = meta.GetPngMetadata();
-                if (pngMeta.ColorType == SixLabors.ImageSharp.Formats.Png.PngColorType.Palette)
+                if (pngMeta.ColorType == PngColorType.Palette)
                     tc = pngMeta.TransparentColor;
                 break;
             case "WEBP":
@@ -162,27 +162,30 @@ public static partial class Sixel
         else
             DebugPrint($"No Background or Transparent palette color found.", lf: true);
 
-        return EncodeFrame(img.Frames.RootFrame, transp, tc, bg);
+        var imageFrame = img.Frames.RootFrame;
+
+        // Building a color palette
+        ReadOnlySpan<SixelColor> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
+
+        return EncodeFrame(imageFrame, colorPalette, transp, tc, bg);
     }
 
     /// <summary>
     /// Encode <see cref="ImageFrame"/> to Sixel string
     /// </summary>
     /// <param name="frame">a frame part of Image data</param>
+    /// <param name="colorPalette">Color palette for Sixel</param>
     /// <param name="tc">Transparent <see cref="Color"/> set for the image</param>
     /// <param name="bg">Background <see cref="Color"/> set for the image</param>
     /// <inheritdoc cref="Encode(Image{Rgba32}, Size?, Transparency, int)"/>
     public static string EncodeFrame(ImageFrame<Rgba32> frame,
+                                     ReadOnlySpan<SixelColor> colorPalette,
                                      Transparency transp = Transparency.Default,
                                      Color? tc = null,
                                      Color? bg = null)
     {
         int canvasWidth = frame.Width;
         int canvasHeight = frame.Height;
-
-        // カラーパレットの構築
-        // Building a color palette
-        ReadOnlySpan<SixelColor> colorPalette = GetColorPalette(frame, transp, tc, bg);
 
         //
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
@@ -397,10 +400,10 @@ public static partial class Sixel
     /// <summary>
     /// Build color palette for Sixel
     /// </summary>
-    private static SixelColor[] GetColorPalette(ImageFrame<Rgba32> frame,
-                                                Transparency transp = Transparency.Default,
-                                                Color? tc = null,
-                                                Color? bg = null)
+    public static SixelColor[] GetColorPalette(ImageFrame<Rgba32> frame,
+                                               Transparency transp = Transparency.Default,
+                                               Color? tc = null,
+                                               Color? bg = null)
     {
         var palette = new HashSet<SixelColor>();
         frame.ProcessPixelRows(accessor =>
