@@ -39,6 +39,7 @@ public static partial class Sixel
         {
             "GIF" => new GifEncoder(image),
             "PNG" => new PngEncoder(image),
+            "WEBP" => new WebpEncoder(image),
             _ => new SixelEncoder(image, format),
         };
     }
