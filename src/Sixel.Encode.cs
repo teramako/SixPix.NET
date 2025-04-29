@@ -35,7 +35,11 @@ public static partial class Sixel
     public static SixelEncoder CreateEncoder(Image<Rgba32> image)
     {
         var format = image.Metadata.DecodedImageFormat?.Name.ToUpperInvariant();
-        return new SixelEncoder(image, format);
+        return format switch
+        {
+            "GIF" => new GifEncoder(image),
+            _ => new SixelEncoder(image, format),
+        };
     }
     /// <summary>
     /// Create an encoder instance to convert the file <paramref name="path"/> to a Sixel string
