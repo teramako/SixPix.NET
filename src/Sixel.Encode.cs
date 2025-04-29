@@ -214,8 +214,8 @@ public static partial class Sixel
         DebugPrint("End Palette", ConsoleColor.DarkGray, true);
 
         var buffer = new byte[canvasWidth * colorPaletteLength];
-        var cset = new bool[colorPaletteLength]; // 表示すべきカラーパレットがあるかのフラグ
-                                                 // Flag to indicate whether there is a color palette to display
+        // Flag to indicate whether there is a color palette to display
+        var cset = new bool[colorPaletteLength];
         var ch0 = specialChNr;
         for (var (z, y) = (0, 0); z < (canvasHeight + 5) / 6; z++, y = z * 6)
         {
