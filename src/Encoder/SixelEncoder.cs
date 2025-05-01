@@ -270,16 +270,19 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         Console.Write($"{Sixel.ESC}[{lines}A");
         // Save the cursor position
         Console.Write($"{Sixel.ESC}[s");
-        await foreach (var sixelString in EncodeFramesAsync(overwriteRepeat,
-                                                            overwriteDelay,
-                                                            cancellationToken))
+        try
         {
-            // Restore the cursor position
-            Console.WriteLine($"{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}");
-            if (cancellationToken.IsCancellationRequested)
+            await foreach (var sixelString in EncodeFramesAsync(overwriteRepeat,
+                                                                overwriteDelay,
+                                                                cancellationToken))
             {
-                break;
+                // Restore the cursor position and then output sixel string
+                Console.WriteLine($"{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}");
             }
+        }
+        catch (TaskCanceledException)
+        {
+            // for ignoring Non Local Exits
         }
     }
 
