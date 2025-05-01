@@ -164,7 +164,7 @@ if (IsBinary(infile))
         {
             if (!anim) // Write to one file
             {
-                var sixelString = sixelEncoder.Encode(f);
+                var sixelString = sixelEncoder.EncodeFrame(f);
 #if SIXPIX_DEBUG
                 var elapsed = DateTime.Now - start;
                 Console.WriteLine($"Elapsed {elapsed.TotalMilliseconds} ms");
@@ -205,7 +205,7 @@ if (IsBinary(infile))
 
         if (f >= 0)
         {
-            Console.Write(sixelEncoder.Encode(f));
+            Console.Write(sixelEncoder.EncodeFrame(f));
             Environment.Exit(0);
         }
 

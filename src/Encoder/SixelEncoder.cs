@@ -131,7 +131,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// </summary>
     /// <param name="frameIndex"></param>
     /// <inheritdoc cref="EncodeFrame(ImageFrame{Rgba32})"/>
-    public string Encode(int frameIndex)
+    public string EncodeFrame(int frameIndex)
     {
         return EncodeFrame(Image.Frames[frameIndex % FrameCount]);
     }
