@@ -283,6 +283,18 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         }
     }
 
+    /// <inheritdoc cref="Animate(int, int, CancellationToken)"/>
+    public async Task Animate(int overwriteRepeat, CancellationToken cancellationToken)
+    {
+        await Animate(overwriteRepeat, 0, cancellationToken);
+    }
+
+    /// <inheritdoc cref="Animate(int, int, CancellationToken)"/>
+    public async Task Animate(CancellationToken cancellationToken)
+    {
+        await Animate(-1, 0, cancellationToken);
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (!disposedValue)
