@@ -43,6 +43,40 @@ ReadOnlySpan<char> sixelString = Sixel.Encode(image);
 Console.Out.WriteLine(sixelString);
 ```
 
+### Create encoder instance and encode
+
+#### Syntax:
+```csharp
+public static SixelEncoder Sixel.CreateEncoder(Image<Rgba32> image)
+public static SixelEncoder Sixel.CreateEncoder(string path)
+public static SixelEncoder Sixel.CreateEncoder(Stream stream)
+```
+
+#### Example:
+```csharp
+using SixPix;
+
+using var encoder = Sixel.CreateEncoder(@"path/to/image.png");
+encoder.Resize(widht: 200, height: 200);
+
+// Encode to Sixel string the automatically choosed frame, normaly the first frame (index = 0).
+string sixelString1 = encoder.Encode();
+
+// Encode to Sixel string frame of the index
+string sixelString2 = encoder.EncodeFrame(1);
+
+// Enumerate encoded string
+foreach (var sixelString in encoder.EncodeFrames())
+{
+    // ...
+}
+
+// Animation
+using var ct = new CancellationTokenSource(10 * 1000); // Stop aflter 10 seconds
+var animationTask = encoder.Animate(ct.Token);
+animationTask.Wait();
+```
+
 ## Decoding ( :ab: Sixel string -> :art: Image)
 
 Decode to [SixLabors.ImageSharp]'s Image from Sixel string data.
