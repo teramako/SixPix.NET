@@ -5,7 +5,7 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace SixPix.Encoder;
 
-internal class CurEncoder : SixelEncoder
+public class CurEncoder : SixelEncoder
 {
     public CurEncoder(Image<Rgba32> img) : base(img, "CUR")
     {

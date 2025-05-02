@@ -5,7 +5,7 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace SixPix.Encoder;
 
-internal class IcoEncoder : SixelEncoder
+public class IcoEncoder : SixelEncoder
 {
     public IcoEncoder(Image<Rgba32> img) : base(img, "ICO")
     {

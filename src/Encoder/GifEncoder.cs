@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace SixPix.Encoder;
 
-internal class GifEncoder : SixelEncoder
+public class GifEncoder : SixelEncoder
 {
     public GifEncoder(Image<Rgba32> img) : base(img, "GIF")
     {

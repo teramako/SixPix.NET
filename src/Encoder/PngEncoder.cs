@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace SixPix.Encoder;
 
-internal class PngEncoder : SixelEncoder
+public class PngEncoder : SixelEncoder
 {
     public PngEncoder(Image<Rgba32> img) : base(img, "PNG")
     {

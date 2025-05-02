@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace SixPix.Encoder;
 
-internal class WebpEncoder : SixelEncoder
+public class WebpEncoder : SixelEncoder
 {
     public WebpEncoder(Image<Rgba32> img) : base(img, "WEBP")
     {
