@@ -27,7 +27,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     public Transparency TransparencyMode { get; set; } = Transparency.Default;
 
     public int FrameCount => Image.Frames.Count;
-    public bool CanAnimate => Image.Frames.Count > 1;
+    public virtual bool CanAnimate => Image.Frames.Count > 1;
 
     public virtual uint RepeatCount => 0;
 
