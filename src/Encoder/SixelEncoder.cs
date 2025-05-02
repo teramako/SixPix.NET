@@ -172,23 +172,14 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         }
     }
 
-    // Should override for support animation
     /// <summary>
-    /// Get the frame metadata of <paramref name="index"/>
+    /// Get frame delay in milliseconds
     /// </summary>
     /// <param name="index">Frame index</param>
-    public virtual IFrameMetadata GetFrameMetadata(int index)
+    /// <returns>Frame delay in milliseconds</returns>
+    protected virtual int GetFrameDelay(ImageFrame<Rgba32> frame)
     {
         throw new NotSupportedException($"Not supported this format: {Format}");
-    }
-
-    /// <seealso cref="GetFrameMetadata(int)"/>
-    public IEnumerable<IFrameMetadata> GetFrameMetadatas()
-    {
-        for (var i = 0; i < Image.Frames.Count; i++)
-        {
-            yield return GetFrameMetadata(i);
-        }
     }
 
     /// <summary>
@@ -215,8 +206,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
             yield break;
         }
         var repeatCount = overwriteRepeat >= 0 ? (uint)overwriteRepeat : RepeatCount;
-        var frameMetadatas = GetFrameMetadatas().ToArray();
-        var delayMiliseconds = frameMetadatas.Select(meta => overwriteDelay > 0 ? overwriteDelay : meta.FrameDelay).ToArray();
+        var delayMiliseconds = frames.Select(frame => overwriteDelay > 0 ? overwriteDelay : GetFrameDelay(frame))
+                                     .ToArray();
 
         // cache of Sixel strings
         var sixelFrames = new string[frames.Count];
@@ -276,6 +267,12 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                               int overwriteDelay = 0,
                               CancellationToken cancellationToken = default)
     {
+        // Check if the image is animated
+        if (!CanAnimate)
+        {
+            throw new NotSupportedException($"This format does not support animation: {Format}");
+        }
+
         var cursorSize = Sixel.GetCellSize();
         int lines = (int)Math.Ceiling((double)Image.Height / cursorSize.Height);
         // Allocate rows for the image height

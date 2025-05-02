@@ -18,17 +18,8 @@ public class GifEncoder : SixelEncoder
 
     public override uint RepeatCount => Metadata.RepeatCount;
 
-    public override IFrameMetadata GetFrameMetadata(int index)
+    protected override int GetFrameDelay(ImageFrame<Rgba32> frame)
     {
-        var frame = Image.Frames[index];
-        return new GifFrameMetadataWrapper(frame.Metadata.GetGifMetadata());
+        return frame.Metadata.GetGifMetadata().FrameDelay * 1000 / 100;
     }
-}
-
-internal class GifFrameMetadataWrapper(GifFrameMetadata metadata)
-    : IFrameMetadata
-{
-    public GifFrameMetadata Metadata => metadata;
-
-    public int FrameDelay => metadata.FrameDelay * 1000 / 100;
 }

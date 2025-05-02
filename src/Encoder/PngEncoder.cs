@@ -17,17 +17,8 @@ public class PngEncoder : SixelEncoder
 
     public override uint RepeatCount => Metadata.RepeatCount;
 
-    public override IFrameMetadata GetFrameMetadata(int index)
+    protected override int GetFrameDelay(ImageFrame<Rgba32> frame)
     {
-        var frame = Image.Frames[index];
-        return new PngFrameMetadataWrapper(frame.Metadata.GetPngMetadata());
+        return (int)(frame.Metadata.GetPngMetadata().FrameDelay.ToDouble() * 1000);
     }
-}
-
-internal class PngFrameMetadataWrapper(PngFrameMetadata metadata)
-    : IFrameMetadata
-{
-    public PngFrameMetadata Metadata => metadata;
-
-    public int FrameDelay => (int)(metadata.FrameDelay.ToDouble() * 1000);
 }
