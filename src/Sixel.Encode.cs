@@ -37,6 +37,7 @@ public static partial class Sixel
             "GIF" => new GifEncoder(image),
             "PNG" => new PngEncoder(image),
             "WEBP" => new WebpEncoder(image),
+            "TIFF" => new TiffEncoder(image),
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
             "ICO" => new IcoEncoder(image),
             "CUR" => new CurEncoder(image),
