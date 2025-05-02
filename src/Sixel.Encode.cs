@@ -1,6 +1,3 @@
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
-using System.Numerics;
-#endif
 using System.Text;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
@@ -271,7 +268,7 @@ public static partial class Sixel
                         cset[idx] = false;
                     else if (transp == Transparency.TopLeft && idx == 0)
                         cset[idx] = false;
-                    else if (transp == Transparency.Background && bg is not null && bg == rgba)
+                    else if (transp == Transparency.Background && bg is not null && bg.Equals(rgba))
                         cset[idx] = false;
                     else
                         cset[idx] = true;
