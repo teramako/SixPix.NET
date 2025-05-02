@@ -10,6 +10,16 @@ internal class IcoEncoder : SixelEncoder
     public IcoEncoder(Image<Rgba32> img) : base(img, "ICO")
     {
         Metadata = img.Metadata.GetIcoMetadata();
+        // Ensure the image size is within the ICO/CUR limits
+        // Set the size of the image to 256 x 256 if the image is too large
+        if (img.Width > 256)
+        {
+            Resize(256, -1);
+        }
+        else if (img.Height > 256)
+        {
+            Resize(-1, 256);
+        }
     }
 
     public IcoMetadata Metadata { get; }
@@ -23,6 +33,16 @@ internal class IcoEncoder : SixelEncoder
     public override string Encode()
     {
         return EncodeFrame(GetBestFrame());
+    }
+
+    public override string EncodeFrame(ImageFrame<Rgba32> frame)
+    {
+        // Get width and height of the frame metadata
+        // The ICO format supports images up to 256 x 256 pixels
+        var metadata = frame.Metadata.GetIcoMetadata();
+        var size = new Size(metadata.EncodingWidth == 0 ? 256 : metadata.EncodingWidth,
+                            metadata.EncodingHeight == 0 ? 256 : metadata.EncodingHeight);
+        return EncodeFrame(frame, size);
     }
 
     /// <summary>

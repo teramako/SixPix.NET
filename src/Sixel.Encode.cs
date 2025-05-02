@@ -202,8 +202,9 @@ public static partial class Sixel
 
         // Building a color palette
         ReadOnlySpan<SixelColor> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
+        Size frameSize = new(canvasWidth, canvasHeight);
 
-        return EncodeFrame(imageFrame, colorPalette, transp, tc, bg);
+        return EncodeFrame(imageFrame, colorPalette, frameSize, transp, tc, bg);
     }
 
     /// <summary>
@@ -211,17 +212,19 @@ public static partial class Sixel
     /// </summary>
     /// <param name="frame">a frame part of Image data</param>
     /// <param name="colorPalette">Color palette for Sixel</param>
+    /// <param name="size">size of the frame</param>
     /// <param name="tc">Transparent <see cref="Color"/> set for the image</param>
     /// <param name="bg">Background <see cref="Color"/> set for the image</param>
     /// <inheritdoc cref="Encode(Image{Rgba32}, Size?, Transparency, int)"/>
     public static string EncodeFrame(ImageFrame<Rgba32> frame,
                                      ReadOnlySpan<SixelColor> colorPalette,
+                                     Size frameSize,
                                      Transparency transp = Transparency.Default,
                                      Color? tc = null,
                                      Color? bg = null)
     {
-        int canvasWidth = frame.Width;
-        int canvasHeight = frame.Height;
+        int canvasWidth = frameSize.Width;
+        int canvasHeight = frameSize.Height;
 
         //
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
