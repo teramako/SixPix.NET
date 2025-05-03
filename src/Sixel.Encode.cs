@@ -1,12 +1,9 @@
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
-using System.Numerics;
-#endif
 using System.Text;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using SixPix.Encoder;
 
 namespace SixPix;
 
@@ -27,6 +24,45 @@ public static partial class Sixel
 
     private const byte specialChNr = 0x6d;
     private const byte specialChCr = 0x64;
+
+    /// <summary>
+    /// Create an encoder instance to convert <paramref name="image"/> to Sixel string
+    /// </summary>
+    /// <param name="image"></param>
+    public static SixelEncoder CreateEncoder(Image<Rgba32> image)
+    {
+        var format = image.Metadata.DecodedImageFormat?.Name.ToUpperInvariant();
+        return format switch
+        {
+            "GIF" => new GifEncoder(image),
+            "PNG" => new PngEncoder(image),
+            "WEBP" => new WebpEncoder(image),
+            "TIFF" => new TiffEncoder(image),
+#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
+            "ICO" => new IcoEncoder(image),
+            "CUR" => new CurEncoder(image),
+#endif
+            _ => new SixelEncoder(image, format),
+        };
+    }
+    /// <summary>
+    /// Create an encoder instance to convert the file <paramref name="path"/> to a Sixel string
+    /// </summary>
+    /// <param name="path">Image file path</param>
+    public static SixelEncoder CreateEncoder(string path)
+    {
+        return File.Exists(path)
+            ? CreateEncoder(Image.Load<Rgba32>(path))
+            : throw new FileNotFoundException("File not found", path);
+    }
+    /// <summary>
+    /// Create an encoder instance to convert the file <paramref name="path"/> to a Sixel string
+    /// </summary>
+    /// <param name="stream">a stream for image</param>
+    public static SixelEncoder CreateEncoder(Stream stream)
+    {
+        return CreateEncoder(Image.Load<Rgba32>(stream));
+    }
 
     /// <summary>
     /// Encode Image stream to Sixel string
@@ -101,7 +137,7 @@ public static partial class Sixel
                 break;
             case "PNG":
                 var pngMeta = meta.GetPngMetadata();
-                if (pngMeta.ColorType == PngColorType.Palette)
+                if (pngMeta.ColorType == SixLabors.ImageSharp.Formats.Png.PngColorType.Palette)
                     tc = pngMeta.TransparentColor;
                 break;
             case "WEBP":
@@ -166,8 +202,9 @@ public static partial class Sixel
 
         // Building a color palette
         ReadOnlySpan<SixelColor> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
+        Size frameSize = new(canvasWidth, canvasHeight);
 
-        return EncodeFrame(imageFrame, colorPalette, transp, tc, bg);
+        return EncodeFrame(imageFrame, colorPalette, frameSize, transp, tc, bg);
     }
 
     /// <summary>
@@ -175,17 +212,19 @@ public static partial class Sixel
     /// </summary>
     /// <param name="frame">a frame part of Image data</param>
     /// <param name="colorPalette">Color palette for Sixel</param>
+    /// <param name="size">size of the frame</param>
     /// <param name="tc">Transparent <see cref="Color"/> set for the image</param>
     /// <param name="bg">Background <see cref="Color"/> set for the image</param>
     /// <inheritdoc cref="Encode(Image{Rgba32}, Size?, Transparency, int)"/>
     public static string EncodeFrame(ImageFrame<Rgba32> frame,
                                      ReadOnlySpan<SixelColor> colorPalette,
+                                     Size frameSize,
                                      Transparency transp = Transparency.Default,
                                      Color? tc = null,
                                      Color? bg = null)
     {
-        int canvasWidth = frame.Width;
-        int canvasHeight = frame.Height;
+        int canvasWidth = frameSize.Width;
+        int canvasHeight = frameSize.Height;
 
         //
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
@@ -237,7 +276,7 @@ public static partial class Sixel
                         cset[idx] = false;
                     else if (transp == Transparency.TopLeft && idx == 0)
                         cset[idx] = false;
-                    else if (transp == Transparency.Background && bg is not null && bg == rgba)
+                    else if (transp == Transparency.Background && bg is not null && bg.Equals(rgba))
                         cset[idx] = false;
                     else
                         cset[idx] = true;

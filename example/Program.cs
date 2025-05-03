@@ -15,7 +15,7 @@ if (args.Length == 0)
 }
 
 Transparency transp = Transparency.Default;
-int w = -1, h = -1, f = 0, rate = 10;
+int w = -1, h = -1, f = -1, rate = 0;
 bool getData = false, anim = false, animForever = false;
 string infile = "", outfile = "";
 const string MAP8_SIXEL = "Pq\"1;1;93;14#0;2;60;0;0#1;2;0;66;0#2;2;56;60;0#3;2;47;38;97#4;2;72;0;69#5;2;0;66;72#6;2;72;72;72#7;2;0;0;0#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11B#1!12B#2!12B#3!12B#4!12B#5!12B#6!12B#7!10B\\";
@@ -132,97 +132,111 @@ if (IsBinary(infile))
     {
         using var fs = fileInfo.OpenRead();
         using var image = Image.Load<Rgba32>(fs);
+        using var sixelEncoder = Sixel.CreateEncoder(image)
+                                      .Resize(width: w, height: h);
+        sixelEncoder.TransparencyMode = transp;
 
-        fs.Seek(0, 0);
-        var format = Sixel.GetFormat(image);
-        fs.Seek(0, 0);
-        var numFrames = Sixel.GetNumFrames(image);
-        if (f >= numFrames)
+        if (f >= sixelEncoder.FrameCount)
         {
             Console.Error.WriteLine("Error: Specified frame does not exist (index starts at 0).");
             getData = true;
         }
 #if IMAGESHARP4
-        fs.Seek(0, 0);
-        var best = Sixel.GetBestFrame(image, null);
+        var best = Sixel.GetBestFrame(sixelEncoder.Image, null);
+        if (f < 0)
+            f = best;
 #endif
-        fs.Seek(0, 0);
-        var numRepeats = Sixel.GetRepeatCount(image);
-
         if (getData)
         {
-            Console.WriteLine("Image Format: " + format);
-            Console.WriteLine("  Num Frames: " + numFrames);
+            Console.WriteLine("Image Format: " + sixelEncoder.Format);
+            Console.WriteLine("  Num Frames: " + sixelEncoder.FrameCount);
 #if IMAGESHARP4
             Console.WriteLine("  Best Frame: " + best);
 #endif
-            Console.WriteLine(" Num Repeats: " + numRepeats);
-            Environment.Exit(numFrames);
+            Console.WriteLine(" Num Repeats: " + sixelEncoder.RepeatCount);
+            Environment.Exit(sixelEncoder.FrameCount);
         }
 
-        List<string> frames = [];
-        for (int frame = 0; frame < numFrames; frame++)
+        if (!anim && f < 0)
+            f = 0;
+
+        if (!string.IsNullOrEmpty(outfile))
         {
-            fs.Seek(0, 0);
-            // Encode: Image stream -> Sixel string (ReadOnlySpan<char>)
-            frames.Add(Sixel.Encode(fs, new Size(w, h), transp, frame).ToString());
-#if SIXPIX_DEBUG
-            if (!anim)
+            if (!anim) // Write to one file
             {
+                var sixelString = sixelEncoder.EncodeFrame(f);
+#if SIXPIX_DEBUG
                 var elapsed = DateTime.Now - start;
                 Console.WriteLine($"Elapsed {elapsed.TotalMilliseconds} ms");
-            }
 #endif
-            if (!string.IsNullOrEmpty(outfile))
-            {
                 // Save image to Sixel text file
                 var thisOutfile = outfile;
-                // Add frame number to filename if exporting multiple frames
-                if (anim)
-                    thisOutfile += frame;
                 if (!thisOutfile.Contains('.'))
                     thisOutfile += ".six";
                 using var wf = new FileStream(thisOutfile, FileMode.Create);
                 Console.WriteLine($"Writing to file {wf.Name} ...");
-                wf.Write(new UTF8Encoding(true).GetBytes(frames[frame]));
+                wf.Write(new UTF8Encoding(true).GetBytes(sixelString));
             }
-        }
+            else // write each frame to a file
+            {
+                var frameIndex = 0;
+                foreach (var sixelString in sixelEncoder.EncodeFrames())
+                {
+#if SIXPIX_DEBUG
+                    var elapsed = DateTime.Now - start;
+                    Console.WriteLine($"Elapsed {elapsed.TotalMilliseconds} ms");
+#endif
+                    // Save image to Sixel text file
+                    var thisOutfile = outfile;
+                    // Add frame number to filename if exporting multiple frames
+                    if (anim)
+                        thisOutfile += frameIndex;
+                    if (!thisOutfile.Contains('.'))
+                        thisOutfile += ".six";
+                    using var wf = new FileStream(thisOutfile, FileMode.Create);
+                    Console.WriteLine($"Writing to file {wf.Name} ...");
+                    wf.Write(new UTF8Encoding(true).GetBytes(sixelString));
 
-        if (!string.IsNullOrEmpty(outfile))
+                    frameIndex++;
+                }
+            }
             Environment.Exit(0);
-
-        int x = 0, y = 0;
-        if (numRepeats < 1)
-            numRepeats = 1;
-        if (anim)
-        {
-            Console.Clear();
-            (x, y) = Console.GetCursorPosition();
-            if (animForever)
-            {
-                Console.WriteLine("Press Ctrl+C to stop.");
-                y++;
-            }
         }
 
-        for (int repeat = 0; repeat < numRepeats; repeat++)
+        if (f >= 0)
         {
-            for (; f < numFrames; f++)
+            Console.Write(sixelEncoder.EncodeFrame(f));
+            Environment.Exit(0);
+        }
+
+        // Start animation
+        Console.WriteLine("Press 'Ctrl+C', 'c' or 'q' to stop.");
+        using var ct = new CancellationTokenSource();
+        var t1 = sixelEncoder.Animate(animForever ? 0 : 1,
+                                      rate > 0 ? rate : 0,
+                                      ct.Token);
+        var t2 = Task.Run(() =>
+        {
+            ConsoleKeyInfo keyInfo;
+            do
             {
-                if (anim)
-                    Console.SetCursorPosition(x, y);
-
-                // Output to stdout
-                Console.WriteLine(frames[f]);
-
-                if (anim)
-                    Thread.Sleep(rate * 10);
-                else
+                keyInfo = Console.ReadKey(true);
+                if (keyInfo.KeyChar is 'c' or 'q')
+                {
+                    ct.CancelAsync();
                     break;
+                }
             }
-            if (animForever)
-                repeat = 0;
-        }
+            while (true);
+        });
+        t1.Wait();
+    }
+    catch (AggregateException e)
+    {
+        if (e.InnerException is TaskCanceledException ex)
+            Console.Error.WriteLine("Canceled.");
+        else
+            throw;
     }
     catch (Exception e)
     {
@@ -329,9 +343,10 @@ static void PrintUsage()
     Console.WriteLine(" /h:<Height> : Height in pixels (optional)");
     Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional),");
     Console.WriteLine("               With <out> specified, encode all frames and append frame number");
-    Console.WriteLine(" /A          : Animate forever, Ctrl+C to stop (optional)");
+    Console.WriteLine(" /A          : Animate forever, 'Ctrl+C', 'c' or 'q' to stop (optional)");
     Console.WriteLine(" /f:<Frame>  : Display a single frame of a multi-frame image (optional)");
-    Console.WriteLine(" /r:<Rate>   : Animation framerate (in frames per second), default=10");
+    Console.WriteLine(" /r:<Rate>   : Animation framerate (in frames per millisecond)");
+    Console.WriteLine("               0 or not specified means use the image's framerate");
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
     Console.WriteLine(" <in>        : Image filename to encode to Sixel (required), supports BMP, CUR,");
     Console.WriteLine("               GIF, ICO, JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
