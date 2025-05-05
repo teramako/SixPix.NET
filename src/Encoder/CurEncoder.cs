@@ -35,14 +35,23 @@ public class CurEncoder : SixelEncoder
         return EncodeFrame(GetBestFrame());
     }
 
-    public override string EncodeFrame(ImageFrame<Rgba32> frame)
+    protected override string EncodeFrameInternal(ImageFrame<Rgba32> frame)
     {
+        // Quantize the image if not already done
+        // and get the color palette for the frame
+        if (!Quantized)
+            Quantize();
         // Get width and height of the frame metadata
-        // The ICO format supports images up to 256 x 256 pixels
-        var metadata = frame.Metadata.GetCurMetadata();
+        // The CUR format supports images up to 256 x 256 pixels
+        var metadata = frame.Metadata.GetIcoMetadata();
         var size = new Size(metadata.EncodingWidth == 0 ? 256 : metadata.EncodingWidth,
                             metadata.EncodingHeight == 0 ? 256 : metadata.EncodingHeight);
-        return EncodeFrame(frame, size);
+        return Sixel.EncodeFrame(frame,
+                                 GetColorPalette(frame),
+                                 size,
+                                 TransparencyMode,
+                                 TransparentColor,
+                                 BackgroundColor);
     }
 
     /// <summary>

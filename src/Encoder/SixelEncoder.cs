@@ -114,9 +114,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// Encode the <see cref="ImageFrame"/> into a Sixel string.
     /// </summary>
     /// <param name="frame"></param>
-    /// <param name="size"></param>
     /// <returns>Sixel string</returns>
-    protected string EncodeFrame(ImageFrame<Rgba32> frame, Size size)
+    protected virtual string EncodeFrameInternal(ImageFrame<Rgba32> frame)
     {
         // Quantize the image if not already done
         // and get the color palette for the frame
@@ -124,7 +123,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
             Quantize();
         return Sixel.EncodeFrame(frame,
                                  GetColorPalette(frame),
-                                 size,
+                                 CanvasSize,
                                  TransparencyMode,
                                  TransparentColor,
                                  BackgroundColor);
@@ -135,9 +134,9 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// </summary>
     /// <param name="frame"></param>
     /// <returns>Sixel string</returns>
-    public virtual string EncodeFrame(ImageFrame<Rgba32> frame)
+    public string EncodeFrame(ImageFrame<Rgba32> frame)
     {
-        return EncodeFrame(frame, CanvasSize);
+        return EncodeFrameInternal(frame);
     }
 
     /// <summary>
@@ -147,7 +146,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// <inheritdoc cref="EncodeFrame(ImageFrame{Rgba32})"/>
     public string EncodeFrame(int frameIndex)
     {
-        return EncodeFrame(Image.Frames[frameIndex % FrameCount]);
+        return EncodeFrameInternal(Image.Frames[frameIndex % FrameCount]);
     }
 
     /// <summary>
