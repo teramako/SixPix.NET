@@ -174,7 +174,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// <summary>
     /// Get frame delay in milliseconds
     /// </summary>
-    /// <param name="index">Frame index</param>
+    /// <param name="frame">Thte image frame</param>
     /// <returns>Frame delay in milliseconds</returns>
     protected virtual int GetFrameDelay(ImageFrame<Rgba32> frame)
     {
@@ -192,7 +192,9 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// Delay milliseconds until next frame.
     /// 0 means use the default value
     /// </param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">
+    /// Cancellation token for the async operation
+    /// </param>
     public async IAsyncEnumerable<string> EncodeFramesAsync(int overwriteRepeat = -1,
                                                             int overwriteDelay = 0,
                                                             [EnumeratorCancellation]
@@ -262,6 +264,9 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// Write to <see cref="Console.Out"/> Sixel strings encoded for each frame
     /// </summary>
     /// <inheritdoc cref="EncodeFramesAsync(int, int, CancellationToken)"/>
+    /// <exception cref="NotSupportedException">
+    /// This format does not support animation
+    /// </exception>
     public async Task Animate(int overwriteRepeat = -1,
                               int overwriteDelay = 0,
                               CancellationToken cancellationToken = default)
