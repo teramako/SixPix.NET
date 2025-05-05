@@ -272,6 +272,8 @@ public static partial class Sixel
                     var rgba = frame[x, y];
                     var sixelColor = SixelColor.FromRgba32(rgba, transp, tc, bg);
                     var idx = colorPalette.IndexOf(sixelColor);
+                    if (idx < 0)
+                        continue;
                     if (colorPalette[idx].A == 0)
                         cset[idx] = false;
                     else if (transp == Transparency.TopLeft && idx == 0)
