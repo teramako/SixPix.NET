@@ -120,6 +120,14 @@ public record struct SixelColor
         }
     }
 
+    public static SixelColor FromColor(Color color,
+                                       Transparency transp = Transparency.Default,
+                                       Color? tc = null,
+                                       Color? bg = null)
+    {
+        return FromRgba32(color.ToPixel<Rgba32>(), transp, tc, bg);
+    }
+
     /// <summary>
     /// Convert to <see cref="Rgba32"/>
     /// </summary>
