@@ -213,8 +213,8 @@ if (IsBinary(infile))
         // Start animation
         Console.WriteLine("Press 'Ctrl+C', 'c' or 'q' to stop.");
         using var ct = new CancellationTokenSource();
+        sixelEncoder.SetFrameDelays(rate > 0 ? rate : 0);
         var t1 = sixelEncoder.Animate(animForever ? 0 : 1,
-                                      rate > 0 ? rate : 0,
                                       f < 0 ? 0 : f,
                                       -1,
                                       ct.Token);

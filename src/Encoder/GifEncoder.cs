@@ -98,9 +98,15 @@ public class GifEncoder : SixelEncoder
                                  bgColor);
     }
 
-    protected override int GetFrameDelay(ImageFrame<Rgba32> frame)
+    protected override int GetFrameDelay(int frameIndex)
     {
-        return frame.Metadata.GetGifMetadata().FrameDelay * 1000 / 100;
+        var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
+        if (delay <= 0)
+        {
+            var frame = Image.Frames[frameIndex];
+            return frame.Metadata.GetGifMetadata().FrameDelay * 1000 / 100;
+        }
+        return delay;
     }
 
     protected override void Dispose(bool disposing)
