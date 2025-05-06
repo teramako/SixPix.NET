@@ -206,7 +206,7 @@ if (IsBinary(infile))
 #endif
             if (f < 0)
                 f = 0;
-            Console.Write(sixelEncoder.EncodeFrame(f));
+            Console.WriteLine(sixelEncoder.EncodeFrame(f));
             Environment.Exit(0);
         }
 
