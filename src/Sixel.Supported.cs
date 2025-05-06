@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace SixPix;
 
@@ -114,19 +115,46 @@ public static partial class Sixel
         */
     }
 
+    private static Color _termBG = Color.Transparent;
+
     /// <summary>
     /// Background color.
-    /// The transparent color is replaced by this color when <see cref="Transparency"/> is <c>None</c>
+    /// The transparent color is replaced or blend by this color when <see cref="Transparency"/> is <c>None</c>
     /// </summary>
-    public static Color BackgroundColor { get; set; } = Color.White;
+    public static Color BackgroundColor
+    {
+        get
+        {
+            if (_termBG != Color.Transparent)
+                return _termBG;
+
+            // ^[]11;rgb:2828/2c2c/3434^[\
+            DebugPrint("GetTerminalBackgroundColor: ^[]11;?\\G  => ", ConsoleColor.DarkGray);
+            var response = GetCtrlSeqResponse($"]11;?{(char)0x07}", '\\');
+            var start = response.IndexOf(':') + 1;
+            if (start < 1)
+                return _termBG;
+
+            var code = response[start..];
+            Span<Range> rgbRange = new Range[3];
+            if (code.Split(rgbRange, '/') != 3)
+                return _termBG;
+
+            _termBG = Color.FromPixel(new Rgb48(ushort.Parse(code[rgbRange[0]], NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                                                ushort.Parse(code[rgbRange[1]], NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                                                ushort.Parse(code[rgbRange[2]], NumberStyles.HexNumber, CultureInfo.InvariantCulture)));
+            return _termBG;
+        }
+        set => _termBG = value;
+    }
 
     /// <summary>
     /// Get the response to an ANSI control sequence.
     /// </summary>
     /// <returns>string response</returns>
-    public static ReadOnlySpan<char> GetCtrlSeqResponse(string ctrlSeq)
+    public static ReadOnlySpan<char> GetCtrlSeqResponse(string ctrlSeq, char? endChar = null)
     {
-        char end = ctrlSeq[^1];
+        char end = endChar ?? ctrlSeq[^1];
         var response = new StringBuilder();
 
         Task.WaitAll([
