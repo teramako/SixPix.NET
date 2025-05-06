@@ -143,8 +143,6 @@ if (IsBinary(infile))
         }
 #if IMAGESHARP4
         var best = Sixel.GetBestFrame(sixelEncoder.Image, null);
-        if (f < 0)
-            f = best;
 #endif
         if (getData)
         {
@@ -156,9 +154,6 @@ if (IsBinary(infile))
             Console.WriteLine(" Num Repeats: " + sixelEncoder.RepeatCount);
             Environment.Exit(sixelEncoder.FrameCount);
         }
-
-        if (!anim && f < 0)
-            f = 0;
 
         if (!string.IsNullOrEmpty(outfile))
         {
@@ -203,8 +198,14 @@ if (IsBinary(infile))
             Environment.Exit(0);
         }
 
-        if (f >= 0)
+        if (!anim)
         {
+#if IMAGESHARP4
+            if (f < 0 && best >= 0)
+                f = best;
+#endif
+            if (f < 0)
+                f = 0;
             Console.Write(sixelEncoder.EncodeFrame(f));
             Environment.Exit(0);
         }
