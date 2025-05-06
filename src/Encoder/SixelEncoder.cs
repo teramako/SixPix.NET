@@ -192,11 +192,19 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// Delay milliseconds until next frame.
     /// 0 means use the default value
     /// </param>
+    /// <param name="startFrame">
+    /// Start index of frame to encode (default = <c>0</c>). Negative value is index from the last.
+    /// </param>
+    /// <param name="endFrame">
+    /// End index of frame to encode (default = <c>-1</c>). Negative value is index from the last.
+    /// </param>
     /// <param name="cancellationToken">
     /// Cancellation token for the async operation
     /// </param>
     public async IAsyncEnumerable<string> EncodeFramesAsync(int overwriteRepeat = -1,
                                                             int overwriteDelay = 0,
+                                                            int startFrame = 0,
+                                                            int endFrame = -1,
                                                             [EnumeratorCancellation]
                                                             CancellationToken cancellationToken = default)
     {
@@ -206,9 +214,30 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
             yield return EncodeFrame(frames[0]);
             yield break;
         }
+
+        startFrame %= frames.Count;
+        endFrame %= frames.Count;
+        if (startFrame < 0)
+            startFrame += frames.Count;
+        if (endFrame < 0)
+            endFrame += frames.Count;
+        if (startFrame > endFrame)
+            (startFrame, endFrame) = (endFrame, startFrame);
+
+        IEnumerable<(int Index, int FrameIndex)> frameIndexEnumerator()
+        {
+            var count = endFrame - startFrame + 1;
+            for (var i = 0; i < count; i++)
+            {
+                yield return (i, i + startFrame);
+            }
+        }
+
         var repeatCount = overwriteRepeat >= 0 ? (uint)overwriteRepeat : RepeatCount;
-        var delayMiliseconds = frames.Select(frame => overwriteDelay > 0 ? overwriteDelay : GetFrameDelay(frame))
-                                     .ToArray();
+        var delayMiliseconds = frameIndexEnumerator().Select(t => overwriteDelay > 0
+                                                                  ? overwriteDelay
+                                                                  : GetFrameDelay(frames[t.FrameIndex]))
+                                                     .ToArray();
 
         // cache of Sixel strings
         var sixelFrames = new string[frames.Count];
@@ -217,9 +246,9 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         using var mutex = new BlockingCollection<bool>();
         var sixelFramesTask = Task.Run(() =>
         {
-            for (var i = 0; i < frames.Count; i++)
+            foreach (var (i, frameIndex) in frameIndexEnumerator())
             {
-                sixelFrames[i] = EncodeFrame(frames[i]);
+                sixelFrames[i] = EncodeFrame(frames[frameIndex]);
                 mutex.Add(true);
             }
             mutex.CompleteAdding();
@@ -228,7 +257,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         DateTime start;
         // The first time of loop:
         // as soon as encoded in Sixel string
-        for (var i = 0; i < frames.Count; i++)
+        foreach (var (i, _) in frameIndexEnumerator())
         {
             start = DateTime.Now;
             mutex.Take(cancellationToken);
@@ -245,7 +274,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         int count = 0;
         while (repeatCount < 1 || repeatCount > ++count)
         {
-            for (var i = 0; i < frames.Count; i++)
+            foreach (var (i, _) in frameIndexEnumerator())
             {
                 yield return sixelFrames[i];
                 if (delayMiliseconds[i] > 0)
@@ -263,12 +292,14 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// <summary>
     /// Write to <see cref="Console.Out"/> Sixel strings encoded for each frame
     /// </summary>
-    /// <inheritdoc cref="EncodeFramesAsync(int, int, CancellationToken)"/>
+    /// <inheritdoc cref="EncodeFramesAsync(int, int, int, int, CancellationToken)"/>
     /// <exception cref="NotSupportedException">
     /// This format does not support animation
     /// </exception>
     public async Task Animate(int overwriteRepeat = -1,
                               int overwriteDelay = 0,
+                              int startFrame = 0,
+                              int endFrame = -1,
                               CancellationToken cancellationToken = default)
     {
         // Check if the image is animated
@@ -289,6 +320,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         {
             await foreach (var sixelString in EncodeFramesAsync(overwriteRepeat,
                                                                 overwriteDelay,
+                                                                startFrame,
+                                                                endFrame,
                                                                 cancellationToken))
             {
                 // Restore the cursor position and then output sixel string
@@ -301,16 +334,22 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         }
     }
 
-    /// <inheritdoc cref="Animate(int, int, CancellationToken)"/>
-    public async Task Animate(int overwriteRepeat, CancellationToken cancellationToken)
+    /// <inheritdoc cref="Animate(int, int, int, int, CancellationToken)"/>
+    public async Task Animate(int overwriteRepeat, int overwriteDelay, CancellationToken cancellationToken)
     {
-        await Animate(overwriteRepeat, 0, cancellationToken);
+        await Animate(overwriteRepeat, overwriteDelay, 0, -1, cancellationToken);
     }
 
-    /// <inheritdoc cref="Animate(int, int, CancellationToken)"/>
+    /// <inheritdoc cref="Animate(int, int, int, int, CancellationToken)"/>
+    public async Task Animate(int overwriteRepeat, CancellationToken cancellationToken)
+    {
+        await Animate(overwriteRepeat, 0, 0, -1, cancellationToken);
+    }
+
+    /// <inheritdoc cref="Animate(int, int, int, int, CancellationToken)"/>
     public async Task Animate(CancellationToken cancellationToken)
     {
-        await Animate(-1, 0, cancellationToken);
+        await Animate(-1, 0, 0, -1, cancellationToken);
     }
 
     protected virtual void Dispose(bool disposing)

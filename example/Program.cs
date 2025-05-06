@@ -215,6 +215,8 @@ if (IsBinary(infile))
         using var ct = new CancellationTokenSource();
         var t1 = sixelEncoder.Animate(animForever ? 0 : 1,
                                       rate > 0 ? rate : 0,
+                                      f < 0 ? 0 : f,
+                                      -1,
                                       ct.Token);
         var t2 = Task.Run(() =>
         {
