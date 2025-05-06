@@ -146,4 +146,32 @@ public record struct SixelColor
     {
         return $"{R:d};{G:d};{B:d}";
     }
+
+    /// <summary>
+    /// Blend <paramref name="background"/> color and make alpha value to 100%
+    /// </summary>
+    /// <param name="background">Background color</param>
+    public void Blend(Color background)
+    {
+        if (background == Color.Transparent)
+            return;
+
+        if (A == 100)
+            return;
+
+        var bg = FromColor(background);
+        if (A == 0)
+        {
+            (R, G, B, A) = (bg.R, bg.G, bg.B, bg.A);
+            return;
+        }
+
+        double alpha = A / 100.0;
+        (R, G, B, A) = (
+            (byte)((R * alpha) + ((1.0 - alpha) * bg.R)),
+            (byte)((G * alpha) + ((1.0 - alpha) * bg.G)),
+            (byte)((B * alpha) + ((1.0 - alpha) * bg.B)),
+            100
+        );
+    }
 }
