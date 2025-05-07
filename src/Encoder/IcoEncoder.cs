@@ -52,10 +52,10 @@ public class IcoEncoder : SixelEncoder
                                  BackgroundColor);
     }
 
-    protected override int GetFrameDelay(int frameIndex)
+    public override int GetFrameDelay(int frameIndex)
     {
         var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
-        return delay <= 0 ? 100 : delay;
+        return delay < 0 ? 100 : delay;
     }
 
     /// <summary>

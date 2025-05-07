@@ -32,9 +32,9 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     public virtual uint RepeatCount => 0;
 
     /// <summary>
-    /// Delay milliseconds for each frame; anything less than 1 means use the default value for the image frame.
+    /// Delay milliseconds for each frame; anything less than 0 means use the default value for the image frame.
     /// </summary>
-    protected int[] FrameDelays { get; set; } = [0];
+    protected int[] FrameDelays { get; set; } = [-1];
 
     /// <summary>
     /// Resize the image
@@ -189,10 +189,10 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// </summary>
     /// <param name="frameIndex">Index of the image frames</param>
     /// <returns>Frame delay in milliseconds</returns>
-    protected virtual int GetFrameDelay(int frameIndex)
+    public virtual int GetFrameDelay(int frameIndex)
     {
         var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
-        return delay <= 0 ? 100 : delay;
+        return delay < 0 ? 100 : delay;
     }
 
     /// <summary>
@@ -313,8 +313,6 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
             throw new NotSupportedException($"This format does not support animation: {Format}");
         }
 
-        bool isOpaque = TransparencyMode == Transparency.None;
-
         var cursorSize = Sixel.GetCellSize();
         int lines = (int)Math.Ceiling((double)Image.Height / cursorSize.Height);
         // Allocate rows for the image height
@@ -330,17 +328,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                                                                 endFrame,
                                                                 cancellationToken))
             {
-                if (isOpaque)
-                {
-                    // Restore the cursor position and then output sixel string
-                    Console.WriteLine($"{Sixel.ESC}[u{sixelString}");
-                }
-                else
-                {
-                    // Restore the cursor position and erase from cursor until end of screen,
-                    // and then output sixel string
-                    Console.WriteLine($"{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}");
-                }
+                // Restore the cursor position and then output sixel string
+                Console.WriteLine($"{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}");
             }
         }
         catch (TaskCanceledException)

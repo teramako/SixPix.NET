@@ -13,5 +13,5 @@ public class TiffEncoder : SixelEncoder
 
     public TiffMetadata Metadata { get; }
 
-    public override bool CanAnimate => false;
+    public override bool CanAnimate => true;
 }

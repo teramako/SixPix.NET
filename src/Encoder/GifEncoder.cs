@@ -98,10 +98,10 @@ public class GifEncoder : SixelEncoder
                                  bgColor);
     }
 
-    protected override int GetFrameDelay(int frameIndex)
+    public override int GetFrameDelay(int frameIndex)
     {
         var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
-        if (delay <= 0)
+        if (delay < 0)
         {
             var frame = Image.Frames[frameIndex];
             return frame.Metadata.GetGifMetadata().FrameDelay * 1000 / 100;
