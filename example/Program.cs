@@ -15,7 +15,7 @@ if (args.Length == 0)
 }
 
 Transparency transp = Transparency.Default;
-int w = -1, h = -1, f = -1, rate = 0;
+int w = -1, h = -1, f = -1, delay = -1;
 bool getData = false, anim = false, animForever = false;
 string infile = "", outfile = "";
 const string MAP8_SIXEL = "Pq\"1;1;93;14#0;2;60;0;0#1;2;0;66;0#2;2;56;60;0#3;2;47;38;97#4;2;72;0;69#5;2;0;66;72#6;2;72;72;72#7;2;0;0;0#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11B#1!12B#2!12B#3!12B#4!12B#5!12B#6!12B#7!10B\\";
@@ -35,8 +35,8 @@ foreach (var arg in args)
                 anim = true;
                 animForever = true;
                 break;
-            case 'd':
-            case 'D':
+            case 'g':
+            case 'G':
                 getData = true;
                 break;
             case 't':
@@ -72,14 +72,12 @@ foreach (var arg in args)
                 if (f < 0)
                     f = 0;
                 break;
-            case 'r':
-            case 'R':
+            case 'd':
+            case 'D':
                 if (param.Contains('='))
-                    _ = int.TryParse(param[(param.IndexOf('=') + 1)..], out rate);
+                    _ = int.TryParse(param[(param.IndexOf('=') + 1)..], out delay);
                 else if (param.Contains(':'))
-                    _ = int.TryParse(param[(param.IndexOf(':') + 1)..], out rate);
-                if (rate < 0)
-                    rate = 0;
+                    _ = int.TryParse(param[(param.IndexOf(':') + 1)..], out delay);
                 break;
             case 'o':    // output filename (explicit instead of based on position)
             case 'O':
@@ -155,12 +153,20 @@ if (IsBinary(infile))
 #endif
         if (getData)
         {
+            (var cw, var ch) = sixelEncoder.CanvasSize;
             Console.WriteLine("Image Format: " + sixelEncoder.Format);
+            Console.WriteLine("  Image Size: " + cw + "x" + ch);
             Console.WriteLine("  Num Frames: " + sixelEncoder.FrameCount);
 #if IMAGESHARP4
             Console.WriteLine("  Best Frame: " + best);
 #endif
             Console.WriteLine(" Num Repeats: " + sixelEncoder.RepeatCount);
+                Console.Write("Frame Delays: [ ");
+            for (var fr = 0; fr < sixelEncoder.FrameCount; fr++)
+            {
+                Console.Write(sixelEncoder.GetFrameDelay(fr) + " ");
+            }
+            Console.WriteLine("]");
             Environment.Exit(sixelEncoder.FrameCount);
         }
 
@@ -222,7 +228,7 @@ if (IsBinary(infile))
         // Start animation
         Console.WriteLine("Press 'Ctrl+C', 'c' or 'q' to stop.");
         using var ct = new CancellationTokenSource();
-        sixelEncoder.SetFrameDelays(rate > 0 ? rate : 0);
+        sixelEncoder.SetFrameDelays(delay >= 0 ? delay : -1);
         var t1 = sixelEncoder.Animate(animForever ? 0 : 1,
                                       f < 0 ? 0 : f,
                                       -1,
@@ -347,7 +353,7 @@ static void PrintUsage()
     //----------------|---------10--------20--------30--------40--------50--------60--------70--------80
     //----------------|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|
     Console.WriteLine("Encoding usage:");
-    Console.WriteLine("     SixPix.exe [/t|/T|/b] [/w:<W>] [/h:<H>] [/a|/A|/f:<F>] [/r:R] <in> [<out>]");
+    Console.WriteLine("    SixPix.exe [/t|/T|/b] [/w:<W>] [/h:<H>] [/a|/A|/f:<F>] [/d:<D>] <in> [<out>]");
     Console.WriteLine(" /t          : Disable transparency, or enable when animating (optional)");
     Console.WriteLine(" /T          : Make color at top-left (x=0,y=0) transparent (optional)");
     Console.WriteLine(" /b          : Make GIF or WebP background color transparent (optional)");
@@ -355,10 +361,9 @@ static void PrintUsage()
     Console.WriteLine(" /h:<Height> : Height in pixels (optional)");
     Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional),");
     Console.WriteLine("               With <out> specified, encode all frames and append frame number");
-    Console.WriteLine(" /A          : Animate forever, 'Ctrl+C', 'c' or 'q' to stop (optional)");
+    Console.WriteLine(" /A          : Animate forever (optional), 'Ctrl+C', 'c' or 'q' to stop");
     Console.WriteLine(" /f:<Frame>  : Display a single frame of a multi-frame image (optional)");
-    Console.WriteLine(" /r:<Rate>   : Animation framerate (in frames per millisecond)");
-    Console.WriteLine("               0 or not specified means use the image's framerate");
+    Console.WriteLine(" /d:<Delay>  : Animation delay (in milliseconds)");
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
     Console.WriteLine(" <in>        : Image filename to encode to Sixel (required), supports BMP, CUR,");
     Console.WriteLine("               GIF, ICO, JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
@@ -366,16 +371,16 @@ static void PrintUsage()
     Console.WriteLine(" <in>        : Image filename to encode to Sixel (required), supports BMP, GIF,");
     Console.WriteLine("               JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
 #endif
-    Console.WriteLine(" <out>[.six] : Output Sixel text filename (optional)");
+    Console.WriteLine(" <out>[.six] : Output Sixel text filename (optional), otherwise display image(s)");
     Console.WriteLine();
     Console.WriteLine("Decoding usage:");
-    Console.WriteLine("     SixPix.exe <in> <out>");
+    Console.WriteLine("    SixPix.exe <in> <out>");
     Console.WriteLine(" <in>        : Sixel text file to decode (required)");
     Console.WriteLine(" <out>[.png] : Output PNG image filename (required)");
     Console.WriteLine();
     Console.WriteLine("Informational usage:");
-    Console.WriteLine("     SixPix.exe /d <in>");
-    Console.WriteLine(" /d          : Get image data (required), return code is number of frames");
+    Console.WriteLine("    SixPix.exe /g <in>");
+    Console.WriteLine(" /g          : Get image data (required), return code is number of frames");
     Console.WriteLine(" <in>        : Image filename to read (required)");
     Console.WriteLine();
 }
