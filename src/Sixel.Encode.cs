@@ -275,8 +275,8 @@ public static partial class Sixel
                     if (idx < 0)
                         continue;
                     if (colorPalette[idx].A == 0)
-                        cset[idx] = false;
-                    else if (transp == Transparency.TopLeft && idx == 0)
+                        cset[idx] = transp == Transparency.None;
+                    else if (transp == Transparency.TopLeft && rgba.Equals(frame[0, 0]))
                         cset[idx] = false;
                     else if (transp == Transparency.Background && bg is not null && bg.Equals(rgba))
                         cset[idx] = false;

@@ -313,6 +313,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
             throw new NotSupportedException($"This format does not support animation: {Format}");
         }
 
+        bool isOpaque = TransparencyMode == Transparency.None;
+
         var cursorSize = Sixel.GetCellSize();
         int lines = (int)Math.Ceiling((double)Image.Height / cursorSize.Height);
         // Allocate rows for the image height
@@ -328,8 +330,17 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                                                                 endFrame,
                                                                 cancellationToken))
             {
-                // Restore the cursor position and then output sixel string
-                Console.WriteLine($"{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}");
+                if (isOpaque)
+                {
+                    // Restore the cursor position and then output sixel string
+                    Console.WriteLine($"{Sixel.ESC}[u{sixelString}");
+                }
+                else
+                {
+                    // Restore the cursor position and erase from cursor until end of screen,
+                    // and then output sixel string
+                    Console.WriteLine($"{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}");
+                }
             }
         }
         catch (TaskCanceledException)

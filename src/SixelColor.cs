@@ -98,8 +98,11 @@ public record struct SixelColor
                                         Color? bg = null)
     {
         var alpha = (byte)Math.Round(rgba.A * 100.0 / 0xFF);
-        if (alpha == 0)
-            return new(0, 0, 0, 0);
+        if (transp == Transparency.None && alpha == 0)
+        {
+            // xxx: should be use <paramref name="tc"/> or <paramref name="bg"/> if available ?
+            return FromColor(Sixel.BackgroundColor);
+        }
 #if IMAGESHARP4 // ImageSharp v4.0
         else if (tc is not null && tc == Color.FromScaledVector(new Vector4(rgba.R, rgba.G, rgba.B, 0)))
             return new(0, 0, 0, alpha);

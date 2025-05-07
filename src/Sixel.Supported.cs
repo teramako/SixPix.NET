@@ -112,6 +112,12 @@ public static partial class Sixel
     }
 
     /// <summary>
+    /// Background color.
+    /// The transparent color is replaced by this color when <see cref="Transparency"/> is <c>None</c>
+    /// </summary>
+    public static Color BackgroundColor { get; set; } = Color.White;
+
+    /// <summary>
     /// Get the response to an ANSI control sequence.
     /// <returns>string response</returns>
     /// </summary>

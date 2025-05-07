@@ -109,9 +109,6 @@ foreach (var arg in args)
     // Don't allow file output forever
     if (!string.IsNullOrEmpty(outfile))
         animForever = false;
-    // Reverse /t logic when displaying animations
-    else if (anim && transp == Transparency.None)
-        transp = Transparency.Default;
 }
 if (!Path.Exists(infile))
 {
@@ -134,7 +131,19 @@ if (IsBinary(infile))
         using var image = Image.Load<Rgba32>(fs);
         using var sixelEncoder = Sixel.CreateEncoder(image)
                                       .Resize(width: w, height: h);
+
+        // Reverse /t logic when displaying animations
+        if (anim)
+        {
+            if (transp == Transparency.None)
+                transp = Transparency.Default;
+            else if (transp == Transparency.Default)
+                transp = Transparency.None;
+        }
         sixelEncoder.TransparencyMode = transp;
+
+        // Set background color
+        Sixel.BackgroundColor = Color.White;
 
         if (f >= sixelEncoder.FrameCount)
         {
