@@ -140,8 +140,8 @@ if (IsBinary(infile))
         }
         sixelEncoder.TransparencyMode = transp;
 
-        // Set background color
-        Sixel.BackgroundColor = Color.White;
+        // FIXME: Make background color configurable in the future
+        // Sixel.BackgroundColor = Color.White;
 
         if (f >= sixelEncoder.FrameCount)
         {
