@@ -24,6 +24,8 @@ public class IcoEncoder : SixelEncoder
 
     public IcoMetadata Metadata { get; }
 
+    public override bool ReverseTransparencyOnAnimate => false;
+
     /// <summary>
     /// Encode a <see cref="ImageFrame"/> into a Sixel string.
     /// The image frame is choosed automaticaly. (typically the root frame)j
@@ -55,7 +57,7 @@ public class IcoEncoder : SixelEncoder
     public override int GetFrameDelay(int frameIndex)
     {
         var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
-        return delay < 0 ? 100 : delay;
+        return delay < 0 ? 500 : delay;
     }
 
     /// <summary>
