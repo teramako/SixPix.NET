@@ -140,8 +140,9 @@ if (IsBinary(infile))
         }
         sixelEncoder.TransparencyMode = transp;
 
-        // Set background color
-        Sixel.BackgroundColor = Color.White;
+        // Set a default background color based on Console.BackgroundColor and the default Windows color scheme
+        var bg = SixelColor.FromConsoleColorCampbell(Console.BackgroundColor);
+        Sixel.BackgroundColor = bg.ToColor();
 
         if (f >= sixelEncoder.FrameCount)
         {

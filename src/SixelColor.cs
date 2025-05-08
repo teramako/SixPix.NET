@@ -132,6 +132,68 @@ public record struct SixelColor
     }
 
     /// <summary>
+    /// Create SixelColor from 16-color ConsoleColor
+    /// </summary>
+    /// <remarks>
+    /// This uses the Win10 "Campbell" default colors, but may not align with user's terminal since colors can be customized.
+    /// We may be able to get the actual colors used by a given terminal, but often may be unable to discover the actual terminal used.
+    /// </remarks>
+    public static SixelColor FromConsoleColorCampbell(ConsoleColor cc)
+    {
+        return cc switch
+        {
+            ConsoleColor.Black      => FromRgba32(new(0x0C, 0x0C, 0x0C)),
+            ConsoleColor.DarkBlue   => FromRgba32(new(0x00, 0x37, 0xDA)),
+            ConsoleColor.DarkGreen  => FromRgba32(new(0x13, 0xA1, 0x0E)),
+            ConsoleColor.DarkCyan   => FromRgba32(new(0x3A, 0x96, 0xDD)),
+            ConsoleColor.DarkRed    => FromRgba32(new(0xC5, 0x0F, 0x1F)),
+            ConsoleColor.DarkMagenta=> FromRgba32(new(0x88, 0x17, 0x98)),
+            ConsoleColor.DarkYellow => FromRgba32(new(0xC1, 0x9C, 0x00)),
+            ConsoleColor.Gray       => FromRgba32(new(0xCC, 0xCC, 0xCC)),
+            ConsoleColor.DarkGray   => FromRgba32(new(0x76, 0x76, 0x76)),
+            ConsoleColor.Blue       => FromRgba32(new(0x3B, 0x78, 0xFF)),
+            ConsoleColor.Green      => FromRgba32(new(0x16, 0xC6, 0x0C)),
+            ConsoleColor.Cyan       => FromRgba32(new(0x61, 0xD6, 0xD6)),
+            ConsoleColor.Red        => FromRgba32(new(0xE7, 0x48, 0x56)),
+            ConsoleColor.Magenta    => FromRgba32(new(0xB4, 0x00, 0x9E)),
+            ConsoleColor.Yellow     => FromRgba32(new(0xF9, 0xF1, 0xA5)),
+            ConsoleColor.White      => FromRgba32(new(0xF2, 0xF2, 0xF2)),
+            _ => FromColor(Color.White),
+        };
+    }
+
+    /// <summary>
+    /// Create SixelColor from 16-color ConsoleColor
+    /// </summary>
+    /// <remarks>
+    /// This uses the pre-Win10 default console colors, but may not align with user's terminal since colors can be customized.
+    /// We may be able to get the actual colors used by a given terminal, but often may be unable to discover the actual terminal used.
+    /// </remarks>
+    public static SixelColor FromConsoleColorVintage(ConsoleColor cc)
+    {
+        return cc switch
+        {
+            ConsoleColor.Black      => FromColor(Color.Black),
+            ConsoleColor.DarkBlue   => FromColor(Color.Navy),
+            ConsoleColor.DarkGreen  => FromColor(Color.Green),
+            ConsoleColor.DarkCyan   => FromColor(Color.Teal),
+            ConsoleColor.DarkRed    => FromColor(Color.Maroon),
+            ConsoleColor.DarkMagenta=> FromColor(Color.Purple),
+            ConsoleColor.DarkYellow => FromColor(Color.Olive),
+            ConsoleColor.Gray       => FromColor(Color.Silver),
+            ConsoleColor.DarkGray   => FromColor(Color.Gray),
+            ConsoleColor.Blue       => FromColor(Color.Blue),
+            ConsoleColor.Green      => FromColor(Color.Lime),
+            ConsoleColor.Cyan       => FromColor(Color.Aqua),
+            ConsoleColor.Red        => FromColor(Color.Red),
+            ConsoleColor.Magenta    => FromColor(Color.Fuchsia),
+            ConsoleColor.Yellow     => FromColor(Color.Yellow),
+            ConsoleColor.White      => FromColor(Color.White),
+            _ => FromColor(Color.White),
+        };
+    }
+
+    /// <summary>
     /// Convert to <see cref="Color"/>
     /// </summary>
     public readonly Color ToColor()
