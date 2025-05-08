@@ -13,5 +13,11 @@ public class TiffEncoder : SixelEncoder
 
     public TiffMetadata Metadata { get; }
 
-    public override bool CanAnimate => true;
+    public override bool ReverseTransparencyOnAnimate => false;
+
+    public override int GetFrameDelay(int frameIndex)
+    {
+        var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
+        return delay < 0 ? 500 : delay;
+    }
 }
