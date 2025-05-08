@@ -16,8 +16,14 @@ public class WebpEncoder : SixelEncoder
 
     public override uint RepeatCount => Metadata.RepeatCount;
 
-    protected override int GetFrameDelay(ImageFrame<Rgba32> frame)
+    public override int GetFrameDelay(int frameIndex)
     {
-        return (int)frame.Metadata.GetWebpMetadata().FrameDelay;
+        var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
+        if (delay < 0)
+        {
+            var frame = Image.Frames[frameIndex];
+            return (int)frame.Metadata.GetWebpMetadata().FrameDelay;
+        }
+        return delay;
     }
 }
