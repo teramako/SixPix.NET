@@ -212,7 +212,7 @@ public static partial class Sixel
     /// </summary>
     /// <param name="frame">a frame part of Image data</param>
     /// <param name="colorPalette">Color palette for Sixel</param>
-    /// <param name="size">size of the frame</param>
+    /// <param name="frameSize">size of the frame</param>
     /// <param name="tc">Transparent <see cref="Color"/> set for the image</param>
     /// <param name="bg">Background <see cref="Color"/> set for the image</param>
     /// <inheritdoc cref="Encode(Image{Rgba32}, Size?, Transparency, int)"/>
