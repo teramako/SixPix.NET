@@ -29,43 +29,43 @@ public class EncodeTest
 
         var sixel = Sixel.Encode(fs);
 
-        Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.TranspStart));
+        Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.SixelStart));
         Assert.IsTrue(sixel.EndsWith(Sixel.ESC + Sixel.End));
 
         CompareData(result1, sixel.ToString());
     }
 
-    [TestMethod("[Encode] test_2.png (no transparency)")]
+    [TestMethod("[Encode] test_1.png (no transparency)")]
     public void TestMethod2Opaque()
     {
-        var result2oFileInfo = new FileInfo(DATA_DIR + "test_2o.six");
+        var result2oFileInfo = new FileInfo(DATA_DIR + "test_1o.six");
         var result2o = File.ReadAllText(result2oFileInfo.FullName).Trim();
 
-        var image2FileInfo = new FileInfo(DATA_DIR + "test_2.png");
+        var image2FileInfo = new FileInfo(DATA_DIR + "test_1.png");
         Assert.IsTrue(image2FileInfo.Exists);
         using var fs = image2FileInfo.OpenRead();
 
         var sixel = Sixel.Encode(fs, transp: Transparency.None);
 
-        Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.OpaqueStart));
+        Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.SixelStart));
         Assert.IsTrue(sixel.EndsWith(Sixel.ESC + Sixel.End));
 
         CompareData(result2o, sixel.ToString());
     }
 
-    [TestMethod("[Encode] test_2.png (top-left transparency)")]
+    [TestMethod("[Encode] test_1.png (top-left transparency)")]
     public void TestMethod2TL()
     {
-        var result2TLFileInfo = new FileInfo(DATA_DIR + "test_2tl.six");
+        var result2TLFileInfo = new FileInfo(DATA_DIR + "test_1tl.six");
         var result2TL = File.ReadAllText(result2TLFileInfo.FullName).Trim();
 
-        var image2FileInfo = new FileInfo(DATA_DIR + "test_2.png");
+        var image2FileInfo = new FileInfo(DATA_DIR + "test_1.png");
         Assert.IsTrue(image2FileInfo.Exists);
         using var fs = image2FileInfo.OpenRead();
 
         var sixel = Sixel.Encode(fs, transp: Transparency.TopLeft);
 
-        Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.TranspStart));
+        Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.SixelStart));
         Assert.IsTrue(sixel.EndsWith(Sixel.ESC + Sixel.End));
 
         CompareData(result2TL, sixel.ToString());
@@ -74,8 +74,8 @@ public class EncodeTest
     [TestMethod("[Encode] test_anim.png")]
     public void TestMethodAnim()
     {
-        var result1FileInfo = new FileInfo(DATA_DIR + "test_1t.six");
-        var result2FileInfo = new FileInfo(DATA_DIR + "test_2t.six");
+        var result1FileInfo = new FileInfo(DATA_DIR + "test_1o.six");
+        var result2FileInfo = new FileInfo(DATA_DIR + "test_2o.six");
         var result1 = File.ReadAllText(result1FileInfo.FullName).Trim();
         var result2 = File.ReadAllText(result2FileInfo.FullName).Trim();
 
@@ -87,7 +87,7 @@ public class EncodeTest
         {
             var sixel = Sixel.Encode(fs, frame: i);
             fs.Seek(0, 0);
-            Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.TranspStart));
+            Assert.IsTrue(sixel.StartsWith(Sixel.ESC + Sixel.SixelStart));
             Assert.IsTrue(sixel.EndsWith(Sixel.ESC + Sixel.End));
             if (i % 2 == 0)
                 CompareData(result1, sixel.ToString());
