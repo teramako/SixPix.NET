@@ -72,7 +72,7 @@ foreach (var sixelString in encoder.EncodeFrames())
 }
 
 // Animation
-using var ct = new CancellationTokenSource(10 * 1000); // Stop aflter 10 seconds
+using var ct = new CancellationTokenSource(10 * 1000); // Stop after 10 seconds
 var animationTask = encoder.Animate(ct.Token);
 animationTask.Wait();
 ```
