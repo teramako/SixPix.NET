@@ -5,6 +5,13 @@ namespace test;
 [TestClass]
 public class EncodeTest
 {
+    public EncodeTest()
+    {
+        // `Console.ReadKey()` is not available in the test workflow.
+        // Set a fixed value first to prevent it from being executed.
+        Sixel.BackgroundColor = SixLabors.ImageSharp.Color.White;
+    }
+
     private const string DATA_DIR = "../../../data/";
 
     private static void CompareData(string expect, string actual)

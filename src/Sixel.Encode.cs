@@ -198,13 +198,15 @@ public static partial class Sixel
         else
             DebugPrint($"No Background or Transparent palette color found.", lf: true);
 
+        Color termbg = BackgroundColor;
+
         var imageFrame = img.Frames.RootFrame;
 
         // Building a color palette
         ReadOnlySpan<SixelColor> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
         Size frameSize = new(canvasWidth, canvasHeight);
 
-        return EncodeFrame(imageFrame, colorPalette, frameSize, transp, tc, bg);
+        return EncodeFrame(imageFrame, colorPalette, frameSize, transp, tc, bg, termbg);
     }
 
     /// <summary>
@@ -221,7 +223,8 @@ public static partial class Sixel
                                      Size frameSize,
                                      Transparency transp = Transparency.Default,
                                      Color? tc = null,
-                                     Color? bg = null)
+                                     Color? bg = null,
+                                     Color? termBg = null)
     {
         int canvasWidth = frameSize.Width;
         int canvasHeight = frameSize.Height;
@@ -239,8 +242,7 @@ public static partial class Sixel
         sb.Append(ESC + sixelStart)
           .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
-        DebugPrint($"Palette Start Length={colorPalette.Length}", lf: true);
-
+        DebugPrint($"Palette Start Length={colorPalette.Length}", ConsoleColor.DarkGray, true);
         int colorPaletteLength = colorPalette.Length;
         for (var i = 0; i < colorPaletteLength; i++)
         {
@@ -271,6 +273,11 @@ public static partial class Sixel
                 {
                     var rgba = frame[x, y];
                     var sixelColor = SixelColor.FromRgba32(rgba, transp, tc, bg);
+                    if (sixelColor.A is > 0 and < 100 && termBg is not null)
+                    {
+                        // Blend the background color to create opaque color
+                        sixelColor.Blend(termBg.Value);
+                    }
                     var idx = colorPalette.IndexOf(sixelColor);
                     if (idx < 0)
                         continue;
@@ -444,7 +451,8 @@ public static partial class Sixel
     public static SixelColor[] GetColorPalette(ImageFrame<Rgba32> frame,
                                                Transparency transp = Transparency.Default,
                                                Color? tc = null,
-                                               Color? bg = null)
+                                               Color? bg = null,
+                                               Color? termbg = null)
     {
         var palette = new HashSet<SixelColor>();
         frame.ProcessPixelRows(accessor =>
@@ -458,6 +466,8 @@ public static partial class Sixel
                     if (pixcelHash.Add(row[x]))
                     {
                         var c = SixelColor.FromRgba32(row[x], transp, tc, bg);
+                        if (c.A is > 0 and < 100 && termbg is not null)
+                            c.Blend(termbg.Value);
                         palette.Add(c);
                     }
                 }
