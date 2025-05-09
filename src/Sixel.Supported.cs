@@ -130,7 +130,7 @@ public static partial class Sixel
 
             // ^[]11;rgb:2828/2c2c/3434^[\
             DebugPrint("GetTerminalBackgroundColor: ^[]11;?\\G  => ", ConsoleColor.DarkGray);
-            var response = GetCtrlSeqResponse($"]11;?{(char)0x07}", '\\');
+            var response = GetCtrlSeqResponse($"]11;?{(char)0x07}", '\\', (char)0x07);
             var start = response.IndexOf(':') + 1;
             if (start < 1)
                 return _termBG;
@@ -152,9 +152,9 @@ public static partial class Sixel
     /// Get the response to an ANSI control sequence.
     /// </summary>
     /// <returns>string response</returns>
-    public static ReadOnlySpan<char> GetCtrlSeqResponse(string ctrlSeq, char? endChar = null)
+    public static ReadOnlySpan<char> GetCtrlSeqResponse(string ctrlSeq, params char[] endChars)
     {
-        char end = endChar ?? ctrlSeq[^1];
+        var ends = endChars.Length > 0 ? endChars : [ctrlSeq[^1]];
         var response = new StringBuilder();
 
         Task.WaitAll([
@@ -165,7 +165,7 @@ public static partial class Sixel
                     char c = Console.ReadKey(true).KeyChar;
                     DebugPrint($"{(char.IsControl(c) ? $"\\{(char)(Convert.ToByte(c) + 0x40)}" : c)}",
                                char.IsControl(c) ? ConsoleColor.Magenta : ConsoleColor.Red);
-                    if (c == end)
+                    if (ends.Contains(c))
                         break;
                     if (!char.IsControl(c))
                         response.Append(c);
