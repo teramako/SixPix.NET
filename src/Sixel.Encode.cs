@@ -18,8 +18,7 @@ public enum Transparency
 public static partial class Sixel
 {
     public const char ESC = '\x1b';
-    public const string OpaqueStart = "P7;0;q\"1;1";
-    public const string TranspStart = "P7;1;q\"1;1";
+    public const string SixelStart = "P7;1;q\"1;1";
     public const string End = "\\";
 
     private const byte specialChNr = 0x6d;
@@ -236,10 +235,7 @@ public static partial class Sixel
         var sb = new StringBuilder();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
 
-        var sixelStart = TranspStart;
-        if (transp == Transparency.None)
-            sixelStart = OpaqueStart;
-        sb.Append(ESC + sixelStart)
+        sb.Append(ESC + SixelStart)
           .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
         DebugPrint($"Palette Start Length={colorPalette.Length}", ConsoleColor.DarkGray, true);
