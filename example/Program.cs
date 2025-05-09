@@ -155,7 +155,7 @@ if (IsBinary(infile))
                                       .Resize(width: w, height: h);
 
         // Reverse /t logic when displaying animations
-        if (anim)
+        if (anim && sixelEncoder.ReverseTransparencyOnAnimate)
         {
             if (transp == Transparency.None)
                 transp = Transparency.Default;
@@ -247,6 +247,12 @@ if (IsBinary(infile))
                 f = 0;
             Console.WriteLine(sixelEncoder.EncodeFrame(f));
             Environment.Exit(0);
+        }
+
+        if (sixelEncoder.FrameCount < 2)
+        {
+            Console.Error.WriteLine("Error: Cannot animate a single-frame file.");
+            Environment.Exit(1);
         }
 
         // Start animation

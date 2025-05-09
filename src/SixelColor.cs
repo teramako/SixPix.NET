@@ -104,9 +104,9 @@ public record struct SixelColor
             return FromColor(Sixel.BackgroundColor);
         }
 #if IMAGESHARP4 // ImageSharp v4.0
-        else if (tc is not null && tc == Color.FromScaledVector(new Vector4(rgba.R, rgba.G, rgba.B, 0)))
+        else if (tc is not null && tc == Color.FromScaledVector(rgba.ToScaledVector4()))
             return new(0, 0, 0, alpha);
-        else if (transp == Transparency.Background && bg is not null && bg == Color.FromScaledVector(new Vector4(rgba.R, rgba.G, rgba.B, 0)))
+        else if (transp == Transparency.Background && bg is not null && bg == Color.FromScaledVector(rgba.ToScaledVector4()))
             return new(0, 0, 0, alpha);
 #else
         else if (tc is not null && tc == Color.FromRgb(rgba.R, rgba.G, rgba.B))
@@ -130,6 +130,29 @@ public record struct SixelColor
     {
         return FromRgba32(color.ToPixel<Rgba32>(), transp, tc, bg);
     }
+
+    /// <summary>
+    /// Convert to <see cref="Color"/>
+    /// </summary>
+    public readonly Color ToColor()
+    {
+#if IMAGESHARP4
+        return Color.FromScaledVector(ToScaledVector4());
+#else
+        var rgba = ToRgba32();
+        return Color.FromRgba(rgba.R, rgba.G, rgba.B, rgba.A);
+#endif
+    }
+
+#if IMAGESHARP4
+    /// <summary>
+    /// Convert to <see cref="Vector4"/>
+    /// </summary>
+    public readonly Vector4 ToScaledVector4()
+    {
+        return new((float)(R / 100.0), (float)(G / 100.0), (float)(B / 100.0), (float)(A / 100.0));
+    }
+#endif
 
     /// <summary>
     /// Convert to <see cref="Rgba32"/>

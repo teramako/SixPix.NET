@@ -67,7 +67,11 @@ public class GifEncoder : SixelEncoder
             var colorPalette = new SixelColor[colorSpan.Length];
             for (var i = 0; i < colorTable.Value.Span.Length; i++)
             {
-                colorPalette[i] = SixelColor.FromColor(colorSpan[i], TransparencyMode, null, bgColor);
+                var color = colorSpan[i];
+                colorPalette[i] = color == bgColor
+                                  ? SixelColor.FromColor(Sixel.BackgroundColor)
+                                  : SixelColor.FromColor(color, TransparencyMode, null, bgColor);
+
             }
             if (isGlobalColorTable)
             {

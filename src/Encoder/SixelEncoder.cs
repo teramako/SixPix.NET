@@ -28,6 +28,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
     public int FrameCount => Image.Frames.Count;
     public virtual bool CanAnimate => Image.Frames.Count > 1;
+    public virtual bool ReverseTransparencyOnAnimate => true;
 
     public virtual uint RepeatCount => 0;
 
@@ -312,7 +313,10 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         // Check if the image is animated
         if (!CanAnimate)
         {
-            throw new NotSupportedException($"This format does not support animation: {Format}");
+            if (FrameCount < 2)
+                throw new NotSupportedException($"This image has only one frame.");
+            else
+                throw new NotSupportedException($"This format does not support animation: {Format}");
         }
 
         bool isOpaque = TransparencyMode == Transparency.None;
