@@ -52,6 +52,7 @@ foreach (var arg in args)
                 break;
             case 'c':
             case 'C':
+                transp = Transparency.None;
                 var o = ' ';
                 if (param.Contains('='))
                     o = '=';
