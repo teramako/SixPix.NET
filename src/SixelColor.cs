@@ -114,13 +114,19 @@ public record struct SixelColor
         else if (transp == Transparency.Background && bg is not null && bg == Color.FromRgb(rgba.R, rgba.G, rgba.B))
             return new(0, 0, 0, alpha);
 #endif
-        else
+
+        var color = new SixelColor((byte)Math.Round(rgba.R * 100.0 / 0xFF),
+                                   (byte)Math.Round(rgba.G * 100.0 / 0xFF),
+                                   (byte)Math.Round(rgba.B * 100.0 / 0xFF),
+                                   alpha);
+        if (alpha is > 0 and < 100)
         {
-            return new((byte)Math.Round(rgba.R * 100.0 / 0xFF),
-                       (byte)Math.Round(rgba.G * 100.0 / 0xFF),
-                       (byte)Math.Round(rgba.B * 100.0 / 0xFF),
-                       alpha);
+            // Blend the background color to create opaque color
+            color.Blend(transp == Transparency.None
+                        ? Sixel.BackgroundColor
+                        : Sixel.TerminalBackgroundColor);
         }
+        return color;
     }
 
     public static SixelColor FromColor(Color color,

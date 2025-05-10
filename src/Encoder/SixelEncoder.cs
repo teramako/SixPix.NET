@@ -113,8 +113,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         return Sixel.GetColorPalette(frame,
                                      TransparencyMode,
                                      TransparentColor,
-                                     BackgroundColor,
-                                     Sixel.BackgroundColor);
+                                     BackgroundColor);
     }
 
     /// <summary>
@@ -133,8 +132,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                                  CanvasSize,
                                  TransparencyMode,
                                  TransparentColor,
-                                 BackgroundColor,
-                                 Sixel.BackgroundColor);
+                                 BackgroundColor);
     }
 
     /// <summary>

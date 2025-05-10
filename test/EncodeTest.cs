@@ -9,7 +9,7 @@ public class EncodeTest
     {
         // `Console.ReadKey()` is not available in the test workflow.
         // Set a fixed value first to prevent it from being executed.
-        Sixel.BackgroundColor = SixLabors.ImageSharp.Color.White;
+        Sixel.TerminalBackgroundColor = SixLabors.ImageSharp.Color.White;
     }
 
     private const string DATA_DIR = "../../../data/";
