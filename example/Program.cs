@@ -385,10 +385,11 @@ static void PrintUsage()
     //----------------|---------10--------20--------30--------40--------50--------60--------70--------80
     //----------------|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|
     Console.WriteLine("Encoding usage:");
-    Console.WriteLine("    SixPix.exe [/t|/T|/b] [/w:<W>] [/h:<H>] [/a|/A|/f:<F>] [/d:<D>] <in> [<out>]");
+    Console.WriteLine("    SixPix.exe [params] <in> [<out>]");
     Console.WriteLine(" /t          : Disable transparency, or enable when animating (optional)");
     Console.WriteLine(" /T          : Make color at top-left (x=0,y=0) transparent (optional)");
     Console.WriteLine(" /b          : Make GIF or WebP background color transparent (optional)");
+    Console.WriteLine(" /c:<Color>  : Specify a background color in hexadecimal (RRGGBB) (optional)");
     Console.WriteLine(" /w:<Width>  : Width in pixels (optional)");
     Console.WriteLine(" /h:<Height> : Height in pixels (optional)");
     Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional),");
