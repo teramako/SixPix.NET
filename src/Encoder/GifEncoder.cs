@@ -9,7 +9,7 @@ public class GifEncoder : SixelEncoder
     public GifEncoder(Image<Rgba32> img) : base(img, "GIF")
     {
         Metadata = img.Metadata.GetGifMetadata();
-        BackgroundColor = Metadata.GlobalColorTable?.Span[Metadata.BackgroundColorIndex];
+        BackgroundColor = Metadata.GlobalColorTable?.Span[Metadata.BackgroundColorIndex].ToPixel<Rgba32>();
         // Gif format is already 256 colors, don't need to quantize
         Quantized = true;
     }
@@ -26,7 +26,7 @@ public class GifEncoder : SixelEncoder
     protected override string EncodeFrameInternal(ImageFrame<Rgba32> frame)
     {
         var meta = frame.Metadata.GetGifMetadata();
-        var bgColor = meta.LocalColorTable?.Span[meta.TransparencyIndex] ?? BackgroundColor;
+        var bgColor = meta.LocalColorTable?.Span[meta.TransparencyIndex].ToPixel<Rgba32>() ?? BackgroundColor;
         return Sixel.EncodeFrame(frame,
                                  GetColorPalette(frame),
                                  CanvasSize,

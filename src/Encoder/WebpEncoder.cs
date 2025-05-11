@@ -9,7 +9,7 @@ public class WebpEncoder : SixelEncoder
     public WebpEncoder(Image<Rgba32> img) : base(img, "WEBP")
     {
         Metadata = img.Metadata.GetWebpMetadata();
-        BackgroundColor = Metadata.BackgroundColor;
+        BackgroundColor = Metadata.BackgroundColor.ToPixel<Rgba32>();
     }
 
     public WebpMetadata Metadata { get; }

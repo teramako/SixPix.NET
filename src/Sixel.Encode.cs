@@ -123,7 +123,7 @@ public static partial class Sixel
             canvasHeight = img.Height;
 
         var meta = img.Metadata;
-        Color? bg = null, tc = null;
+        Rgba32? bg = null, tc = null;
         var format = meta.DecodedImageFormat?.Name.ToUpperInvariant();
         int frameCount = img.Frames.Count;
 
@@ -132,15 +132,15 @@ public static partial class Sixel
         {
             case "GIF":
                 var gifMeta = meta.GetGifMetadata();
-                bg = gifMeta.GlobalColorTable?.Span[gifMeta.BackgroundColorIndex];
+                bg = gifMeta.GlobalColorTable?.Span[gifMeta.BackgroundColorIndex].ToPixel<Rgba32>();
                 break;
             case "PNG":
                 var pngMeta = meta.GetPngMetadata();
                 if (pngMeta.ColorType == SixLabors.ImageSharp.Formats.Png.PngColorType.Palette)
-                    tc = pngMeta.TransparentColor;
+                    tc = pngMeta.TransparentColor?.ToPixel<Rgba32>();
                 break;
             case "WEBP":
-                bg = meta.GetWebpMetadata().BackgroundColor;
+                bg = meta.GetWebpMetadata().BackgroundColor.ToPixel<Rgba32>();
                 break;
         }
 
@@ -219,8 +219,8 @@ public static partial class Sixel
                                      ReadOnlySpan<SixelColor> colorPalette,
                                      Size frameSize,
                                      Transparency transp = Transparency.Default,
-                                     Color? tc = null,
-                                     Color? bg = null)
+                                     Rgba32? tc = null,
+                                     Rgba32? bg = null)
     {
         int canvasWidth = frameSize.Width;
         int canvasHeight = frameSize.Height;
@@ -438,8 +438,8 @@ public static partial class Sixel
     /// </summary>
     public static SixelColor[] GetColorPalette(ImageFrame<Rgba32> frame,
                                                Transparency transp = Transparency.Default,
-                                               Color? tc = null,
-                                               Color? bg = null)
+                                               Rgba32? tc = null,
+                                               Rgba32? bg = null)
     {
         var palette = new HashSet<SixelColor>();
         frame.ProcessPixelRows(accessor =>
