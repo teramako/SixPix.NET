@@ -115,13 +115,31 @@ public static partial class Sixel
         */
     }
 
-    private static Color _termBG = Color.Transparent;
+    private static Color _backgroundColor = Color.Transparent;
 
     /// <summary>
     /// Background color.
     /// The transparent color is replaced or blend by this color when <see cref="Transparency"/> is <c>None</c>
     /// </summary>
     public static Color BackgroundColor
+    {
+        get
+        {
+            if (_backgroundColor != Color.Transparent)
+                return _backgroundColor;
+
+            _backgroundColor = TerminalBackgroundColor;
+            return _backgroundColor;
+        }
+        set => _backgroundColor = value;
+    }
+
+    private static Color _termBG = Color.Transparent;
+
+    /// <summary>
+    /// Terminal Background color.
+    /// </summary>
+    public static Color TerminalBackgroundColor
     {
         get
         {
