@@ -16,6 +16,7 @@ if (args.Length == 0)
 
 Transparency transp = Transparency.Default;
 int w = -1, h = -1, f = -1, delay = -1;
+Rgba32 bgColor = new();
 bool getData = false, anim = false, animForever = false;
 string infile = "", outfile = "";
 const string MAP8_SIXEL = "Pq\"1;1;93;14#0;2;60;0;0#1;2;0;66;0#2;2;56;60;0#3;2;47;38;97#4;2;72;0;69#5;2;0;66;72#6;2;72;72;72#7;2;0;0;0#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11~#1!12~#2!12~#3!12~#4!12~#5!12~#6!12~#7!10~-#0!11B#1!12B#2!12B#3!12B#4!12B#5!12B#6!12B#7!10B\\";
@@ -48,6 +49,30 @@ foreach (var arg in args)
             case 'b':
             case 'B':
                 transp = Transparency.Background;
+                break;
+            case 'c':
+            case 'C':
+                transp = Transparency.None;
+                var o = ' ';
+                if (param.Contains('='))
+                    o = '=';
+                else if (param.Contains(':'))
+                    o = ':';
+                else
+                    break;
+                string s = param[(param.IndexOf(o) + 1)..];
+                if (s.StartsWith('#'))
+                    s = s[1..];
+                else if (s.StartsWith("0x"))
+                    s = s[2..];
+                if (s.Length > 2 && s.Length < 9)
+                {
+                    if (s.Length == 5 || s.Length == 7)
+                        s = '0' + s;
+                    if (Rgba32.TryParseHex(s, out bgColor))
+                        break;
+                }
+                Console.WriteLine("Error: Bad color value specified (must be in hexadecimal).");
                 break;
             case 'w':
             case 'W':
@@ -140,8 +165,8 @@ if (IsBinary(infile))
         }
         sixelEncoder.TransparencyMode = transp;
 
-        // FIXME: Make background color configurable in the future
-        // Sixel.BackgroundColor = Color.White;
+        if (bgColor != default)
+            Sixel.BackgroundColor = bgColor;
 
         if (f >= sixelEncoder.FrameCount)
         {
@@ -350,6 +375,7 @@ static void PrintUsage()
         var windowPixelSize = Sixel.GetWindowPixelSize();
 
         Console.WriteLine($"Sixel is supported! [Cell Size:{cellSize.Width}x{cellSize.Height}; " +
+            $"Background:#{Sixel.BackgroundColor}; " +
             $"Current Window:{windowPixelSize.Width}x{windowPixelSize.Height}px, {windowCharSize.Width}x{windowCharSize.Height}ch]");
     }
     else
@@ -359,10 +385,11 @@ static void PrintUsage()
     //----------------|---------10--------20--------30--------40--------50--------60--------70--------80
     //----------------|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|
     Console.WriteLine("Encoding usage:");
-    Console.WriteLine("    SixPix.exe [/t|/T|/b] [/w:<W>] [/h:<H>] [/a|/A|/f:<F>] [/d:<D>] <in> [<out>]");
+    Console.WriteLine("    SixPix.exe [params] <in> [<out>]");
     Console.WriteLine(" /t          : Disable transparency, or enable when animating (optional)");
     Console.WriteLine(" /T          : Make color at top-left (x=0,y=0) transparent (optional)");
     Console.WriteLine(" /b          : Make GIF or WebP background color transparent (optional)");
+    Console.WriteLine(" /c:<Color>  : Specify a background color in hexadecimal (RRGGBB) (optional)");
     Console.WriteLine(" /w:<Width>  : Width in pixels (optional)");
     Console.WriteLine(" /h:<Height> : Height in pixels (optional)");
     Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional),");
