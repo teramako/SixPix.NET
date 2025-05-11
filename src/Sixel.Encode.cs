@@ -265,19 +265,19 @@ public static partial class Sixel
                 for (var x = 0; x < canvasWidth; x++)
                 {
                     var rgba = frame[x, y];
+                    if (transp == Transparency.TopLeft && rgba == frame[0, 0])
+                        continue;
+                    if (transp == Transparency.Background && rgba == bg)
+                        continue;
+
                     var sixelColor = SixelColor.FromRgba32(rgba, transp, tc, bg);
+                    if (sixelColor.A == 0)
+                        continue;
                     var idx = colorPalette.IndexOf(sixelColor);
                     if (idx < 0)
                         continue;
-                    if (colorPalette[idx].A == 0)
-                        cset[idx] = transp == Transparency.None;
-                    else if (transp == Transparency.TopLeft && rgba.Equals(frame[0, 0]))
-                        cset[idx] = false;
-                    else if (transp == Transparency.Background && bg is not null && bg.Equals(rgba))
-                        cset[idx] = false;
-                    else
-                        cset[idx] = true;
 
+                    cset[idx] = true;
                     buffer[(canvasWidth * idx) + x] |= (byte)(1 << p);
                 }
             }
@@ -453,6 +453,8 @@ public static partial class Sixel
                     if (pixcelHash.Add(row[x]))
                     {
                         var c = SixelColor.FromRgba32(row[x], transp, tc, bg);
+                        if (c.A == 0)
+                            continue;
                         palette.Add(c);
                     }
                 }

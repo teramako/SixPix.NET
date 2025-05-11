@@ -105,22 +105,27 @@ public record struct SixelColor
                                         Rgba32? tc = null,
                                         Rgba32? bg = null)
     {
-        var alpha = (byte)Math.Round(rgba.A * 100.0 / 0xFF);
-        if (transp == Transparency.None && alpha == 0)
+        SixelColor color;
+        if (rgba.A == 0)
         {
-            // xxx: should be use <paramref name="tc"/> or <paramref name="bg"/> if available ?
-            return FromRgba32(Sixel.BackgroundColor.ToPixel<Rgba32>());
+            color = transp switch
+            {
+                Transparency.None => FromRgba32(Sixel.BackgroundColor.ToPixel<Rgba32>()),
+                Transparency.TopLeft => FromRgba32(Sixel.BackgroundColor.ToPixel<Rgba32>()),
+                Transparency.Background => bg is not null
+                                           ? FromRgba32(bg.Value)
+                                           : default,
+                _ => default
+            };
         }
         else if (tc is not null && tc == rgba)
-            return new(0, 0, 0, alpha);
+            color = default;
         else if (transp == Transparency.Background && bg is not null && bg == rgba)
-            return new(0, 0, 0, alpha);
+            color = default;
+        else
+            color = FromRgba32(rgba);
 
-        var color = new SixelColor((byte)Math.Round(rgba.R * 100.0 / 0xFF),
-                                   (byte)Math.Round(rgba.G * 100.0 / 0xFF),
-                                   (byte)Math.Round(rgba.B * 100.0 / 0xFF),
-                                   alpha);
-        if (alpha is > 0 and < 100)
+        if (color.A is > 0 and < 100)
         {
             // Blend the background color to create opaque color
             color.Blend(transp == Transparency.None
