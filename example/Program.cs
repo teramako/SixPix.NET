@@ -155,8 +155,8 @@ if (IsBinary(infile))
         using var sixelEncoder = Sixel.CreateEncoder(image)
                                       .Resize(width: w, height: h);
 
-        // Reverse /t logic when displaying animations
-        if (anim && sixelEncoder.ReverseTransparencyOnAnimate)
+        // Reverse /t logic when displaying animations if sync isn't supported
+        if (anim && sixelEncoder.ReverseTransparencyOnAnimate && !Sixel.IsSyncSupported())
         {
             if (transp == Transparency.None)
                 transp = Transparency.Default;

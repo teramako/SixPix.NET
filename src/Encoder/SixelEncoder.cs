@@ -317,6 +317,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                 throw new NotSupportedException($"This format does not support animation: {Format}");
         }
 
+        Console.Write(Sixel.ESC + Sixel.CursorOff);
+
         bool isOpaque = TransparencyMode == Transparency.None;
 
         var cursorSize = Sixel.GetCellSize();
@@ -330,8 +332,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         string beginSync = "", endSync = "";
         if (Sixel.IsSyncSupported())
         {
-            beginSync = Sixel.SyncBegin;
-            endSync = Sixel.SyncEnd + Sixel.ESC + Sixel.End;
+            beginSync = Sixel.ESC + Sixel.SyncBegin;
+            endSync = Sixel.ESC + Sixel.SyncEnd;
         }
         try
         {
@@ -343,13 +345,13 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                 if (isOpaque)
                 {
                     // Restore the cursor position and then output sixel string
-                    Console.WriteLine($"{Sixel.ESC}[u{sixelString}");
+                    Console.Write($"{Sixel.ESC}[u{sixelString}");
                 }
                 else
                 {
                     // Restore the cursor position and erase from cursor until end of screen,
                     // and then output sixel string; do the erase and draw in one batch update if possible
-                    Console.WriteLine($"{beginSync}{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}{endSync}");
+                    Console.Write($"{beginSync}{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}{endSync}");
                 }
             }
         }
@@ -357,6 +359,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         {
             // for ignoring Non Local Exits
         }
+
+        Console.WriteLine(Sixel.ESC + Sixel.CursorOn);
     }
 
     /// <inheritdoc cref="Animate(int, int, int, CancellationToken)"/>
