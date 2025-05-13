@@ -10,7 +10,7 @@ public class PngEncoder : SixelEncoder
     {
         Metadata = img.Metadata.GetPngMetadata();
         if (Metadata.ColorType == PngColorType.Palette)
-            TransparentColor = Metadata.TransparentColor;
+            TransparentColor = Metadata.TransparentColor?.ToPixel<Rgba32>();
     }
 
     public PngMetadata Metadata { get; }

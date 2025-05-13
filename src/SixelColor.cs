@@ -92,43 +92,47 @@ public record struct SixelColor
                    (byte)Math.Round(b));
     }
 
-    public static SixelColor FromRgba32(Rgba32 rgba,
-                                        Transparency transp = Transparency.Default,
-                                        Color? tc = null,
-                                        Color? bg = null)
+    public static SixelColor FromRgba32(Rgba32 rgba)
     {
-        var alpha = (byte)Math.Round(rgba.A * 100.0 / 0xFF);
-        if (transp == Transparency.None && alpha == 0)
-        {
-            // xxx: should be use <paramref name="tc"/> or <paramref name="bg"/> if available ?
-            return FromColor(Sixel.BackgroundColor);
-        }
-#if IMAGESHARP4 // ImageSharp v4.0
-        else if (tc is not null && tc == Color.FromScaledVector(rgba.ToScaledVector4()))
-            return new(0, 0, 0, alpha);
-        else if (transp == Transparency.Background && bg is not null && bg == Color.FromScaledVector(rgba.ToScaledVector4()))
-            return new(0, 0, 0, alpha);
-#else
-        else if (tc is not null && tc == Color.FromRgb(rgba.R, rgba.G, rgba.B))
-            return new(0, 0, 0, alpha);
-        else if (transp == Transparency.Background && bg is not null && bg == Color.FromRgb(rgba.R, rgba.G, rgba.B))
-            return new(0, 0, 0, alpha);
-#endif
-        else
-        {
-            return new((byte)Math.Round(rgba.R * 100.0 / 0xFF),
-                       (byte)Math.Round(rgba.G * 100.0 / 0xFF),
-                       (byte)Math.Round(rgba.B * 100.0 / 0xFF),
-                       alpha);
-        }
+        return new((byte)Math.Round(rgba.R * 100.0 / 0xFF),
+                   (byte)Math.Round(rgba.G * 100.0 / 0xFF),
+                   (byte)Math.Round(rgba.B * 100.0 / 0xFF),
+                   (byte)Math.Round(rgba.A * 100.0 / 0xFF));
     }
 
-    public static SixelColor FromColor(Color color,
-                                       Transparency transp = Transparency.Default,
-                                       Color? tc = null,
-                                       Color? bg = null)
+    public static SixelColor FromRgba32(Rgba32 rgba,
+                                        Transparency transp,
+                                        Rgba32? tc = null,
+                                        Rgba32? bg = null)
     {
-        return FromRgba32(color.ToPixel<Rgba32>(), transp, tc, bg);
+        SixelColor color;
+        if (rgba.A == 0)
+        {
+            color = transp switch
+            {
+                Transparency.None => FromRgba32(Sixel.BackgroundColor.ToPixel<Rgba32>()),
+                Transparency.TopLeft => FromRgba32(Sixel.BackgroundColor.ToPixel<Rgba32>()),
+                Transparency.Background => bg is not null
+                                           ? FromRgba32(bg.Value)
+                                           : default,
+                _ => default
+            };
+        }
+        else if (tc is not null && tc == rgba)
+            color = default;
+        else if (transp == Transparency.Background && bg is not null && bg == rgba)
+            color = default;
+        else
+            color = FromRgba32(rgba);
+
+        if (color.A is > 0 and < 100)
+        {
+            // Blend the background color to create opaque color
+            color.Blend(transp == Transparency.None
+                        ? Sixel.BackgroundColor
+                        : Sixel.TerminalBackgroundColor);
+        }
+        return color;
     }
 
     /// <summary>
@@ -182,7 +186,7 @@ public record struct SixelColor
         if (A == 100)
             return;
 
-        var bg = FromColor(background);
+        var bg = FromRgba32(background.ToPixel<Rgba32>());
         if (A == 0)
         {
             (R, G, B, A) = (bg.R, bg.G, bg.B, bg.A);
