@@ -256,6 +256,9 @@ if (IsBinary(infile))
             Environment.Exit(1);
         }
 
+        // Disable cursor
+        Console.Write(Sixel.ESC + Sixel.CursorOff);
+
         // Start animation
         Console.WriteLine("Press 'c' or 'q' to stop.");
         using var ct = new CancellationTokenSource();
@@ -294,6 +297,9 @@ if (IsBinary(infile))
         Console.Error.WriteLine(e.StackTrace);
 #endif
     }
+
+    // Re-enable cursor
+    Console.WriteLine(Sixel.ESC + Sixel.CursorOn);
 }
 else
 {

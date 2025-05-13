@@ -317,8 +317,6 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                 throw new NotSupportedException($"This format does not support animation: {Format}");
         }
 
-        Console.Write(Sixel.ESC + Sixel.CursorOff);
-
         bool isOpaque = TransparencyMode == Transparency.None;
 
         var cursorSize = Sixel.GetCellSize();
@@ -359,8 +357,6 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         {
             // for ignoring Non Local Exits
         }
-
-        Console.WriteLine(Sixel.ESC + Sixel.CursorOn);
     }
 
     /// <inheritdoc cref="Animate(int, int, int, CancellationToken)"/>
