@@ -65,9 +65,9 @@ foreach (var arg in args)
                     s = s[1..];
                 else if (s.StartsWith("0x"))
                     s = s[2..];
-                if (s.Length > 2 && s.Length < 9)
+                if (s.Length is > 2 and < 9)
                 {
-                    if (s.Length == 5 || s.Length == 7)
+                    if (s.Length is 5 or 7)
                         s = '0' + s;
                     if (Rgba32.TryParseHex(s, out bgColor))
                         break;
