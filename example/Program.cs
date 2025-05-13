@@ -166,7 +166,7 @@ if (IsBinary(infile))
         sixelEncoder.TransparencyMode = transp;
 
         if (bgColor != default)
-            Sixel.BackgroundColor = bgColor;
+            Sixel.BackgroundColor = Color.FromPixel(bgColor);
 
         if (f >= sixelEncoder.FrameCount)
         {
