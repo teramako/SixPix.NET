@@ -260,7 +260,7 @@ if (IsBinary(infile))
         Console.Write(Sixel.ESC + Sixel.CursorOff);
 
         // Start animation
-        Console.WriteLine("Press 'c' or 'q' to stop.");
+        Console.WriteLine("Press 'Ctrl+c' or 'q' to stop.");
         using var ct = new CancellationTokenSource();
         sixelEncoder.SetFrameDelays(delay >= 0 ? delay : -1);
         var t1 = sixelEncoder.Animate(animForever ? 0 : 1,
@@ -269,17 +269,20 @@ if (IsBinary(infile))
                                       ct.Token);
         var t2 = Task.Run(() =>
         {
+            Console.TreatControlCAsInput = true;
             ConsoleKeyInfo keyInfo;
             do
             {
                 keyInfo = Console.ReadKey(true);
-                if (keyInfo.KeyChar is 'c' or 'q')
+                if (keyInfo is { Key: ConsoleKey.C, Modifiers: ConsoleModifiers.Control }
+                            or { KeyChar: 'q' })
                 {
                     ct.CancelAsync();
                     break;
                 }
             }
             while (true);
+            Console.TreatControlCAsInput = false;
         });
         t1.Wait();
     }
@@ -403,7 +406,7 @@ static void PrintUsage()
     Console.WriteLine(" /h:<Height> : Height in pixels (optional)");
     Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional),");
     Console.WriteLine("               With <out> specified, encode all frames and append frame number");
-    Console.WriteLine(" /A          : Animate forever (optional), press 'c' or 'q' to stop");
+    Console.WriteLine(" /A          : Animate forever (optional), press 'Ctrl+c' or 'q' to stop");
     Console.WriteLine(" /f:<Frame>  : Display a single frame of a multi-frame image (optional)");
     Console.WriteLine(" /d:<Delay>  : Animation delay (in milliseconds)");
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
