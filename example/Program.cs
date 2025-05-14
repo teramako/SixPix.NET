@@ -155,8 +155,8 @@ if (IsBinary(infile))
         using var sixelEncoder = Sixel.CreateEncoder(image)
                                       .Resize(width: w, height: h);
 
-        // Reverse /t logic when displaying animations
-        if (anim && sixelEncoder.ReverseTransparencyOnAnimate)
+        // Reverse /t logic when displaying animations if sync isn't supported
+        if (anim && sixelEncoder.ReverseTransparencyOnAnimate && !Sixel.IsSyncSupported())
         {
             if (transp == Transparency.None)
                 transp = Transparency.Default;
@@ -256,8 +256,11 @@ if (IsBinary(infile))
             Environment.Exit(1);
         }
 
+        // Disable cursor
+        Console.Write(Sixel.ESC + Sixel.CursorOff);
+
         // Start animation
-        Console.WriteLine("Press 'Ctrl+C', 'c' or 'q' to stop.");
+        Console.WriteLine("Press 'Ctrl+c' or 'q' to stop.");
         using var ct = new CancellationTokenSource();
         sixelEncoder.SetFrameDelays(delay >= 0 ? delay : -1);
         var t1 = sixelEncoder.Animate(animForever ? 0 : 1,
@@ -266,17 +269,20 @@ if (IsBinary(infile))
                                       ct.Token);
         var t2 = Task.Run(() =>
         {
+            Console.TreatControlCAsInput = true;
             ConsoleKeyInfo keyInfo;
             do
             {
                 keyInfo = Console.ReadKey(true);
-                if (keyInfo.KeyChar is 'c' or 'q')
+                if (keyInfo is { Key: ConsoleKey.C, Modifiers: ConsoleModifiers.Control }
+                            or { KeyChar: 'q' })
                 {
                     ct.CancelAsync();
                     break;
                 }
             }
             while (true);
+            Console.TreatControlCAsInput = false;
         });
         t1.Wait();
     }
@@ -294,6 +300,9 @@ if (IsBinary(infile))
         Console.Error.WriteLine(e.StackTrace);
 #endif
     }
+
+    // Re-enable cursor
+    Console.WriteLine(Sixel.ESC + Sixel.CursorOn);
 }
 else
 {
@@ -374,9 +383,12 @@ static void PrintUsage()
         var windowCharSize = Sixel.GetWindowCharSize();
         var windowPixelSize = Sixel.GetWindowPixelSize();
 
-        Console.WriteLine($"Sixel is supported! [Cell Size:{cellSize.Width}x{cellSize.Height}; " +
-            $"Background:#{Sixel.BackgroundColor}; " +
-            $"Current Window:{windowPixelSize.Width}x{windowPixelSize.Height}px, {windowCharSize.Width}x{windowCharSize.Height}ch]");
+        Console.WriteLine($"Sixel is supported!");
+        Console.WriteLine($"Background:#{Sixel.BackgroundColor}; " +
+            $"Sync Output:{Sixel.IsSyncSupported()}; " +
+            $"Cell Size:{cellSize.Width}x{cellSize.Height}; " +
+            $"Current Window:{windowPixelSize.Width}x{windowPixelSize.Height}px, " +
+            $"{windowCharSize.Width}x{windowCharSize.Height}ch");
     }
     else
         Console.WriteLine("If you see colored bands above, your terminal supports Sixel.");
@@ -394,7 +406,7 @@ static void PrintUsage()
     Console.WriteLine(" /h:<Height> : Height in pixels (optional)");
     Console.WriteLine(" /a          : Animate the frames of a multi-frame image (optional),");
     Console.WriteLine("               With <out> specified, encode all frames and append frame number");
-    Console.WriteLine(" /A          : Animate forever (optional), 'Ctrl+C', 'c' or 'q' to stop");
+    Console.WriteLine(" /A          : Animate forever (optional), press 'Ctrl+c' or 'q' to stop");
     Console.WriteLine(" /f:<Frame>  : Display a single frame of a multi-frame image (optional)");
     Console.WriteLine(" /d:<Delay>  : Animation delay (in milliseconds)");
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files

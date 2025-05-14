@@ -10,6 +10,7 @@ public static partial class Sixel
     private static Size? CellSize;
 
     private const string CSI_DEVICE_ATTRIBUTES = "[c";
+    private const string CSI_SYNC_OUTPUT = "[?2026$p";
     private const string CSI_CELL_SIZE = "[16t";
     private const string CSI_WINDOW_PIXSIZE = "[14t";
     private const string CSI_WINDOW_CHARSIZE = "[18t";
@@ -28,6 +29,21 @@ public static partial class Sixel
 
         return response.Contains(";4;", StringComparison.Ordinal)
             || response.EndsWith(";4", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Check whether current terminal support synchronized output
+    /// <returns>bool</returns>
+    /// </summary>
+    public static bool IsSyncSupported()
+    {
+
+        // Should get something like: ^[[?2026;1$yc
+        // The "1" indicates synchronized output support (may receive 0 in its place, or nothing at all)
+        DebugPrint($"IsSyncSupported: ^[{CSI_SYNC_OUTPUT} => ", ConsoleColor.DarkGray);
+        var response = GetCtrlSeqResponse(CSI_SYNC_OUTPUT);
+
+        return !(response == default || response.Contains("2026;0$", StringComparison.Ordinal));
     }
 
     /// <summary>

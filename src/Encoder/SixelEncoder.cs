@@ -327,6 +327,12 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         Console.Write($"{Sixel.ESC}[{lines}A");
         // Save the cursor position
         Console.Write($"{Sixel.ESC}[s");
+        string beginSync = "", endSync = "";
+        if (Sixel.IsSyncSupported())
+        {
+            beginSync = Sixel.ESC + Sixel.SyncBegin;
+            endSync = Sixel.ESC + Sixel.SyncEnd;
+        }
         try
         {
             await foreach (var sixelString in EncodeFramesAsync(overwriteRepeat,
@@ -337,13 +343,13 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                 if (isOpaque)
                 {
                     // Restore the cursor position and then output sixel string
-                    Console.WriteLine($"{Sixel.ESC}[u{sixelString}");
+                    Console.Write($"{Sixel.ESC}[u{sixelString}");
                 }
                 else
                 {
                     // Restore the cursor position and erase from cursor until end of screen,
-                    // and then output sixel string
-                    Console.WriteLine($"{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}");
+                    // and then output sixel string; do the erase and draw in one batch update if possible
+                    Console.Write($"{beginSync}{Sixel.ESC}[u{Sixel.ESC}[0J{sixelString}{endSync}");
                 }
             }
         }
