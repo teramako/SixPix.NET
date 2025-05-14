@@ -23,8 +23,6 @@ public static partial class Sixel
     public const string SyncEnd     = "[?2026l";
     public const string CursorOff   = "[?25l";
     public const string CursorOn    = "[?25h";
-    public const string OpaqueStart = "P7;0;q\"1;1";
-    public const string TranspStart = "P7;1;q\"1;1";
     public const string End = "\\";
 
     private const byte specialChNr = 0x6d;
