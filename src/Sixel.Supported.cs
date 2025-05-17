@@ -41,7 +41,7 @@ public static partial class Sixel
         // Should get something like: ^[[?2026;1$yc
         // The "1" indicates synchronized output support (may receive 0 in its place, or nothing at all)
         DebugPrint($"IsSyncSupported: ^[{CSI_SYNC_OUTPUT} => ", ConsoleColor.DarkGray);
-        var response = GetCtrlSeqResponse(CSI_SYNC_OUTPUT);
+        var response = GetCtrlSeqResponse(CSI_SYNC_OUTPUT, 'y');
 
         return !(response == default || response.Contains("2026;0$", StringComparison.Ordinal));
     }
@@ -191,27 +191,42 @@ public static partial class Sixel
         var ends = endChars.Length > 0 ? endChars : [ctrlSeq[^1]];
         var response = new StringBuilder();
 
-        Task.WaitAll([
-            Task.Run(() =>
+#if DEBUG
+        var start = DateTime.Now;
+#endif
+
+        async Task ReadKeys(CancellationToken ct)
+        {
+            while (!Console.KeyAvailable)
             {
-                do
-                {
-                    char c = Console.ReadKey(true).KeyChar;
-                    DebugPrint($"{(char.IsControl(c) ? $"\\{(char)(Convert.ToByte(c) + 0x40)}" : c)}",
-                               char.IsControl(c) ? ConsoleColor.Magenta : ConsoleColor.Red);
-                    if (ends.Contains(c))
-                        break;
-                    if (!char.IsControl(c))
-                        response.Append(c);
-                }
-                while (Console.KeyAvailable);
-                DebugPrint(string.Empty, lf: true);
-            }),
-            Task.Run(() =>
+                ct.ThrowIfCancellationRequested();
+                await Task.Delay(1, ct);
+            }
+            do
             {
-                Console.Out.Write($"{ESC}{ctrlSeq}");
-            })
-        ]);
+                char c = Console.ReadKey(true).KeyChar;
+                DebugPrint($"{(char.IsControl(c) ? $"\\{(char)(Convert.ToByte(c) + 0x40)}" : c)}",
+                           char.IsControl(c) ? ConsoleColor.Magenta : ConsoleColor.Red);
+                if (ends.Contains(c))
+                    break;
+                if (!char.IsControl(c))
+                    response.Append(c);
+            }
+            while (Console.KeyAvailable);
+            DebugPrint($" ({(DateTime.Now - start).TotalMilliseconds}ms)", ConsoleColor.DarkGray, true);
+        }
+
+        try
+        {
+            // Timeout: 100 ms
+            var cts = new CancellationTokenSource(100);
+
+            using var readTask = ReadKeys(cts.Token);
+            Console.Out.Write($"{ESC}{ctrlSeq}");
+            readTask.Wait(cts.Token);
+        }
+        catch (OperationCanceledException) { }
+
         return response.ToString();
     }
 }
