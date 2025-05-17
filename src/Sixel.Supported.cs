@@ -213,7 +213,9 @@ public static partial class Sixel
                     response.Append(c);
             }
             while (Console.KeyAvailable);
+#if DEBUG
             DebugPrint($" ({(DateTime.Now - start).TotalMilliseconds}ms)", ConsoleColor.DarkGray, true);
+#endif
         }
 
         try
