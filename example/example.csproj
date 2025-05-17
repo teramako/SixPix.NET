@@ -9,11 +9,15 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!--<DefineConstants>$(DefineConstants);IMAGESHARP4</DefineConstants>-->
+    <!-- <UseImageSharp4>true</UseImageSharp4> -->
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants);SIXPIX_DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(UseImageSharp4)' == 'true'">
+    <DefineConstants>$(DefineConstants);IMAGESHARP4</DefineConstants>
   </PropertyGroup>
 
 </Project>
