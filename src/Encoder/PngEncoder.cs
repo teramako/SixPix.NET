@@ -9,8 +9,19 @@ public class PngEncoder : SixelEncoder
     public PngEncoder(Image<Rgba32> img) : base(img, "PNG")
     {
         Metadata = img.Metadata.GetPngMetadata();
-        if (Metadata.ColorType == PngColorType.Palette)
-            TransparentColor = Metadata.TransparentColor?.ToPixel<Rgba32>();
+        switch (Metadata.ColorType)
+        {
+            case PngColorType.Palette:
+                TransparentColor = Metadata.TransparentColor?.ToPixel<Rgba32>();
+                Quantized = true;
+                break;
+            case PngColorType.Rgb:
+                Quantized = true;
+                break;
+            case PngColorType.Grayscale:
+                Quantized = true;
+                break;
+        }
     }
 
     public PngMetadata Metadata { get; }
