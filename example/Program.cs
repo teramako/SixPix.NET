@@ -246,7 +246,12 @@ if (IsBinary(infile))
 #endif
             if (f < 0)
                 f = 0;
-            Console.WriteLine(sixelEncoder.EncodeFrame(f));
+            var sixelString = sixelEncoder.EncodeFrame(f);
+#if SIXPIX_DEBUG
+            var elapsed = DateTime.Now - start;
+            Console.WriteLine($"Elapsed {elapsed.TotalMilliseconds} ms");
+#endif
+            Console.WriteLine(sixelString);
             Environment.Exit(0);
         }
 
