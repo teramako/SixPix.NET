@@ -10,6 +10,8 @@ And [SixLabors/ImageSharp] is used for image processing.
 
 [nuget.org] is available.
 
+To build manually, see [build.md](build.md).
+
 ## :bulb: Usage and Example
 
 See [src/README.md](./src/) and [example directory](./example/)
