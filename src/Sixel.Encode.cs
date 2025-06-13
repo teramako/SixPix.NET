@@ -496,7 +496,7 @@ public static partial class Sixel
             if ((int)meta.BmpBitsPerPixel >= maxBpp)
             {
                 maxBpp = (int)meta.BmpBitsPerPixel;
-                int w = meta.EncodingWidth;
+                int w = meta.EncodingWidth ?? 0;
                 //int h = meta.EncodingHeight;
                 if (w == 0) // oddly, 0 means 256
                     w = 256;
