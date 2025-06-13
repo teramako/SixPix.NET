@@ -44,8 +44,8 @@ public class IcoEncoder : SixelEncoder
         // Get width and height of the frame metadata
         // The ICO format supports images up to 256 x 256 pixels
         var metadata = frame.Metadata.GetIcoMetadata();
-        var size = new Size(metadata.EncodingWidth == 0 ? 256 : metadata.EncodingWidth,
-                            metadata.EncodingHeight == 0 ? 256 : metadata.EncodingHeight);
+        var size = new Size(metadata.EncodingWidth is null or 0 ? 256 : (int)metadata.EncodingWidth,
+                            metadata.EncodingHeight is null or 0 ? 256 : (int)metadata.EncodingHeight);
         return Sixel.EncodeFrame(frame,
                                  GetColorPalette(frame),
                                  size,
