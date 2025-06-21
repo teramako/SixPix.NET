@@ -78,6 +78,13 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     {
         return Resize(size.Width, size.Height);
     }
+    /// <param name="ratio"></param>
+    /// <inheritdoc cref="Resize(int, int)"/>
+    public SixelEncoder Resize(double ratio)
+    {
+        return Resize((int)(Image.Width * ratio),
+                      (int)(Image.Height * ratio));
+    }
 
     /// <summary>
     /// Flag if the quantization process has been performed for avoid duplicate processing
