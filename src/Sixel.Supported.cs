@@ -43,7 +43,7 @@ public static partial class Sixel
         DebugPrint($"IsSyncSupported: ^[{CSI_SYNC_OUTPUT} => ", ConsoleColor.DarkGray);
         var response = GetCtrlSeqResponse(CSI_SYNC_OUTPUT, 'y');
 
-        return !(response == default || response.Contains("2026;0$", StringComparison.Ordinal));
+        return !(response.IsEmpty || response.Contains("2026;0$", StringComparison.Ordinal));
     }
 
     /// <summary>

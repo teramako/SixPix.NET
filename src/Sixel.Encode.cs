@@ -41,10 +41,8 @@ public static partial class Sixel
             "PNG" => new PngEncoder(image),
             "WEBP" => new WebpEncoder(image),
             "TIFF" => new TiffEncoder(image),
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
             "ICO" => new IcoEncoder(image),
             "CUR" => new CurEncoder(image),
-#endif
             _ => new SixelEncoder(image, format),
         };
     }
@@ -136,7 +134,7 @@ public static partial class Sixel
         {
             case "GIF":
                 var gifMeta = meta.GetGifMetadata();
-                bg = gifMeta.GlobalColorTable?.Span[gifMeta.BackgroundColorIndex].ToPixel<Rgba32>();
+                bg = gifMeta.BackgroundColor?.ToPixel<Rgba32>();
                 break;
             case "PNG":
                 var pngMeta = meta.GetPngMetadata();
@@ -151,7 +149,6 @@ public static partial class Sixel
         // Detect images with multiple frames
         switch (format)
         {
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
             case "CUR":
             case "ICO":
                 if (frameCount > 1)
@@ -167,7 +164,6 @@ public static partial class Sixel
                         img = img.Frames.ExportFrame(GetBestFrame(img, new(canvasWidth, canvasHeight)));
                 }
                 break;
-#endif
             case "GIF":
             case "PNG":  // APNG animations supported
             case "TIFF": // Can contain multiple pages
@@ -409,16 +405,13 @@ public static partial class Sixel
     public static int GetRepeatCount(Image<Rgba32> img)
     {
         var meta = img.Metadata;
-        switch (meta.DecodedImageFormat?.Name.ToUpperInvariant())
+        return (meta.DecodedImageFormat?.Name.ToUpperInvariant()) switch
         {
-            case "GIF":
-                return (int?)meta.GetGifMetadata().RepeatCount ?? -1;
-            case "PNG":
-                return (int?)meta.GetPngMetadata().RepeatCount ?? -1;
-            case "WEBP":
-                return (int?)meta.GetWebpMetadata().RepeatCount ?? -1;
-        }
-        return -1;
+            "GIF" => (int?)meta.GetGifMetadata().RepeatCount ?? -1,
+            "PNG" => (int?)meta.GetPngMetadata().RepeatCount ?? -1,
+            "WEBP" => (int?)meta.GetWebpMetadata().RepeatCount ?? -1,
+            _ => -1,
+        };
     }
 
     /// <summary>
@@ -467,7 +460,6 @@ public static partial class Sixel
         return [.. palette];
     }
 
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
     /// <summary>
     /// Determine best-sized ImageFrame (for CUR and ICO)
     /// </summary>
@@ -496,9 +488,9 @@ public static partial class Sixel
             if ((int)meta.BmpBitsPerPixel >= maxBpp)
             {
                 maxBpp = (int)meta.BmpBitsPerPixel;
-                int w = meta.EncodingWidth;
+                int w = meta.EncodingWidth ?? 0;
                 //int h = meta.EncodingHeight;
-                if (w == 0) // oddly, 0 means 256
+                if (meta.EncodingWidth.HasValue && w == 0) // oddly, 0 means 256
                     w = 256;
                 if ((bestDim <= 0) ||
                     ((sizeDim is null || sizeDim <= 0) && w > bestDim) ||
@@ -514,5 +506,4 @@ public static partial class Sixel
         DebugPrint("Best ImageFrame: " + bestFrame, lf: true);
         return bestFrame;
     }
-#endif
 }
