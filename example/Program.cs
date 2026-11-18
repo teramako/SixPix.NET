@@ -2,6 +2,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixPix;
+using System.Globalization;
 using System.Text;
 
 #if SIXPIX_DEBUG
@@ -69,7 +70,7 @@ foreach (var arg in args)
                 {
                     if (s.Length is 5 or 7)
                         s = '0' + s;
-                    if (Rgba32.TryParseHex(s, out bgColor))
+                    if (TryParseRgba32Hex(s, out bgColor))
                         break;
                 }
                 Console.WriteLine("Error: Bad color value specified (must be in hexadecimal).");
@@ -173,18 +174,14 @@ if (IsBinary(infile))
             Console.Error.WriteLine("Error: Specified frame does not exist (index starts at 0).");
             getData = true;
         }
-#if IMAGESHARP4
         var best = Sixel.GetBestFrame(sixelEncoder.Image, null);
-#endif
         if (getData)
         {
             (var cw, var ch) = sixelEncoder.CanvasSize;
             Console.WriteLine("Image Format: " + sixelEncoder.Format);
             Console.WriteLine("  Image Size: " + cw + "x" + ch);
             Console.WriteLine("  Num Frames: " + sixelEncoder.FrameCount);
-#if IMAGESHARP4
             Console.WriteLine("  Best Frame: " + best);
-#endif
             Console.WriteLine(" Num Repeats: " + sixelEncoder.RepeatCount);
                 Console.Write("Frame Delays: [ ");
             for (var fr = 0; fr < sixelEncoder.FrameCount; fr++)
@@ -240,17 +237,13 @@ if (IsBinary(infile))
 
         if (!anim)
         {
-#if IMAGESHARP4
             if (f < 0 && best >= 0)
                 f = best;
-#endif
             if (f < 0)
                 f = 0;
             var sixelString = sixelEncoder.EncodeFrame(f);
-#if SIXPIX_DEBUG
             var elapsed = DateTime.Now - start;
             Console.WriteLine($"Elapsed {elapsed.TotalMilliseconds} ms");
-#endif
             Console.WriteLine(sixelString);
             Environment.Exit(0);
         }
@@ -414,13 +407,8 @@ static void PrintUsage()
     Console.WriteLine(" /A          : Animate forever (optional), press 'Ctrl+c' or 'q' to stop");
     Console.WriteLine(" /f:<Frame>  : Display a single frame of a multi-frame image (optional)");
     Console.WriteLine(" /d:<Delay>  : Animation delay (in milliseconds)");
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
     Console.WriteLine(" <in>        : Image filename to encode to Sixel (required), supports BMP, CUR,");
     Console.WriteLine("               GIF, ICO, JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
-#else
-    Console.WriteLine(" <in>        : Image filename to encode to Sixel (required), supports BMP, GIF,");
-    Console.WriteLine("               JPEG, PBM, PNG, QOI, TGA, TIFF, and WebP");
-#endif
     Console.WriteLine(" <out>[.six] : Output Sixel text filename (optional), otherwise display image(s)");
     Console.WriteLine();
     Console.WriteLine("Decoding usage:");
@@ -433,4 +421,41 @@ static void PrintUsage()
     Console.WriteLine(" /g          : Get image data (required), return code is number of frames");
     Console.WriteLine(" <in>        : Image filename to read (required)");
     Console.WriteLine();
+}
+
+static bool TryParseRgba32Hex(string hex, out Rgba32 color)
+{
+    color = default;
+
+    // Supports RGB, RGBA, RRGGBB, RRGGBBAA
+    if (hex.Length == 3 || hex.Length == 4)
+    {
+        var expanded = new StringBuilder(hex.Length * 2);
+        foreach (char c in hex)
+        {
+            expanded.Append(c);
+            expanded.Append(c);
+        }
+        hex = expanded.ToString();
+    }
+
+    if (hex.Length != 6 && hex.Length != 8)
+        return false;
+
+    if (!uint.TryParse(hex, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var value))
+        return false;
+
+    color = hex.Length == 6
+        ? new Rgba32(
+            (byte)((value >> 16) & 0xFF),
+            (byte)((value >> 8) & 0xFF),
+            (byte)(value & 0xFF),
+            255)
+        : new Rgba32(
+            (byte)((value >> 24) & 0xFF),
+            (byte)((value >> 16) & 0xFF),
+            (byte)((value >> 8) & 0xFF),
+            (byte)(value & 0xFF));
+
+    return true;
 }

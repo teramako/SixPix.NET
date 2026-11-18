@@ -1,6 +1,4 @@
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
 using System.Numerics;
-#endif
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -140,15 +138,9 @@ public record struct SixelColor
     /// </summary>
     public readonly Color ToColor()
     {
-#if IMAGESHARP4
         return Color.FromScaledVector(ToScaledVector4());
-#else
-        var rgba = ToRgba32();
-        return Color.FromRgba(rgba.R, rgba.G, rgba.B, rgba.A);
-#endif
     }
 
-#if IMAGESHARP4
     /// <summary>
     /// Convert to <see cref="Vector4"/>
     /// </summary>
@@ -156,7 +148,6 @@ public record struct SixelColor
     {
         return new((float)(R / 100.0), (float)(G / 100.0), (float)(B / 100.0), (float)(A / 100.0));
     }
-#endif
 
     /// <summary>
     /// Convert to <see cref="Rgba32"/>

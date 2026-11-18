@@ -1,6 +1,4 @@
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
 using System.Numerics;
-#endif
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -37,7 +35,7 @@ public static partial class Sixel
         int repeatCount = 1;
 
         byte[] buffer = new byte[2];
-        stream.Read(buffer);
+        stream.ReadExactly(buffer);
         if (buffer[0] != 0x1B /* ESC */ || buffer[1] != 0x50 /* 'P' */)
         {
             throw new InvalidDataException($"Sixel must start with [ESC, 'P']");
@@ -67,11 +65,7 @@ public static partial class Sixel
             Position = AnchorPositionMode.TopLeft,
         };
 
-#if IMAGESHARP4 // ImageSharp v4.0
         var image = new Image<Rgba32>(new Configuration(), canvasSize.Width, canvasSize.Height, Rgba32.FromScaledVector4(Color.White.ToScaledVector4()));
-#else
-        var image = new Image<Rgba32>(canvasSize.Width, canvasSize.Height, Color.White);
-#endif
 
 
         DebugPrint("Start Sixel Data", lf: true);

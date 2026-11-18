@@ -1,4 +1,3 @@
-#if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Ico;
 using SixLabors.ImageSharp.PixelFormats;
@@ -44,8 +43,10 @@ public class IcoEncoder : SixelEncoder
         // Get width and height of the frame metadata
         // The ICO format supports images up to 256 x 256 pixels
         var metadata = frame.Metadata.GetIcoMetadata();
-        var size = new Size(metadata.EncodingWidth == 0 ? 256 : metadata.EncodingWidth,
-                            metadata.EncodingHeight == 0 ? 256 : metadata.EncodingHeight);
+        var encodingWidth = metadata.EncodingWidth.GetValueOrDefault();
+        var encodingHeight = metadata.EncodingHeight.GetValueOrDefault();
+        var size = new Size(encodingWidth == 0 ? 256 : encodingWidth,
+                            encodingHeight == 0 ? 256 : encodingHeight);
         return Sixel.EncodeFrame(frame,
                                  GetColorPalette(frame),
                                  size,
@@ -70,4 +71,3 @@ public class IcoEncoder : SixelEncoder
         return Sixel.GetBestFrame(Image, size);
     }
 }
-#endif
