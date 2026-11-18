@@ -10,7 +10,14 @@ And [SixLabors/ImageSharp] is used for image processing.
 
 [nuget.org] is available.
 
-To build manually, see [build.md](build.md).
+## Build
+
+```sh
+dotnet build -c Debug ./src
+```
+
+The project uses ImageSharp 4.x and requires a valid Six Labors license key for building.
+See `src/sixlabors.lic` for the community license configuration.
 
 ## :bulb: Usage and Example
 
