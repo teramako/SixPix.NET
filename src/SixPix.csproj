@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -13,6 +13,7 @@
     <Copyright>Copyright (c) teramako 2026</Copyright>
     <RepositoryUrl>https://github.com/teramako/SixPix.NET</RepositoryUrl>
     <PackageTags>Sixel</PackageTags>
+    <SixLaborsLicenseFile>sixlabors.lic</SixLaborsLicenseFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <!--<DefineConstants>$(DefineConstants);SIXPIX_DEBUG</DefineConstants>-->
