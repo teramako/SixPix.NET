@@ -1,0 +1,46 @@
+name: Release
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+
+    name: Publish to NuGet
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Test
+        run: dotnet test -c Release --no-build --verbosity normal
+
+      - name: Create NuGet Package
+        run: dotnet pack src/SixPix.csproj -c Release --no-restore --no-build --verbosity normal
+
+      # Get a short-lived NuGet API key
+      - name: NuGet login
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      # Push the package
+      - name: NuGet push
+        run: |
+          dotnet nuget push src/bin/Release/*.nupkg --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
